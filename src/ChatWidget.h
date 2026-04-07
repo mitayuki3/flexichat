@@ -1,20 +1,21 @@
 #pragma once
 
-#include <QWidget>
 #include <QString>
+#include <QWidget>
 
-class QTextEdit;
-class QLineEdit;
-class QPushButton;
-class QVBoxLayout;
+QT_BEGIN_NAMESPACE
+namespace Ui {
+class ChatWidget;
+}
+QT_END_NAMESPACE
+
 class LMStudioClient;
 
 /**
  * @brief チャットUIウィジェットクラス
  * メッセージ表示、テキスト入力、送信機能を提供する
  */
-class ChatWidget : public QWidget
-{
+class ChatWidget : public QWidget {
     Q_OBJECT
 
 public:
@@ -27,12 +28,8 @@ private slots:
     void onErrorOccurred(const QString &error);
 
 private:
-    QTextEdit *m_chatDisplay;
-    QLineEdit *m_inputField;
-    QPushButton *m_sendButton;
-    QVBoxLayout *m_layout;
+    Ui::ChatWidget *ui;
     LMStudioClient *m_client;
 
-    void setupUI();
     void appendMessage(const QString &role, const QString &message);
 };
