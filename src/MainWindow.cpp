@@ -1,54 +1,43 @@
 #include "MainWindow.h"
 #include "ChatWidget.h"
-#include <QTextEdit>
-#include <QMenuBar>
-#include <QMenu>
+#include "ui_MainWindow.h"
 #include <QMessageBox>
-#include <QSettings>
 
 /**
  * @brief コンストラクタ
  * UIのセットアップを行う
  */
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_chatWidget(nullptr)
-{
-    setWindowTitle("FlexiChat - LM Studio");
-    resize(800, 600);
-
-    setupMenuBar();
+    : QMainWindow(parent), ui(new Ui::MainWindow), m_chatWidget(nullptr) {
+    ui->setupUi(this);
+    connectSignals();
     setupUI();
 }
 
 /**
  * @brief デストラクタ
  */
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() { delete ui; }
 
 /**
- * @brief メニューバーのセットアップ
+ * @brief シグナル接続の設定
  */
-void MainWindow::setupMenuBar()
-{
-    // ファイルメニュー
-    auto *fileMenu = menuBar()->addMenu("ファイル");
-    auto *exitAction = fileMenu->addAction("終了");
-    connect(exitAction, &QAction::triggered, this, &QWidget::close);
+void MainWindow::connectSignals() {
+    // 終了アクションの接続
+    connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
 
-    // ヘルプメニュー
-    auto *helpMenu = menuBar()->addMenu("ヘルプ");
-    auto *aboutAction = helpMenu->addAction("バージョン情報");
-    connect(aboutAction, &QAction::triggered, this, [this]() {
-        QMessageBox::about(this, "バージョン情報", "FlexiChat v1.0.0\n\nQt + CMake AIチャットアプリ");
+    // バージョン情報アクションの接続
+    connect(ui->actionAbout, &QAction::triggered, this, [this]() {
+        QMessageBox::about(this, "バージョン情報",
+                           "FlexiChat v1.0.0\n\nQt + CMake AIチャットアプリ");
     });
 }
 
 /**
  * @brief UIのセットアップ
  */
-void MainWindow::setupUI()
-{
+void MainWindow::setupUI() {
     // チャットウィジェットの作成
     m_chatWidget = new ChatWidget(this);
-    setCentralWidget(m_chatWidget);
+    ui->chatContainer->layout()->addWidget(m_chatWidget);
 }
