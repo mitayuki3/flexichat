@@ -1,27 +1,32 @@
 #include "MainWindow.h"
-#include "ChatWidget.h"
 #include "LMStudioClient.h"
 #include "ui_MainWindow.h"
 #include <QMessageBox>
+#include <QScrollBar>
 
 /**
  * @brief コンストラクタ
  * UIのセットアップを行う
  */
 MainWindow::MainWindow(LMStudioClient *client, QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), m_chatWidget(nullptr) {
+    : QMainWindow(parent), ui(new Ui::MainWindow), m_client(client),
+      m_model(new QStringListModel(this)) {
     ui->setupUi(this);
+
+    // モデルのセットアップ
+    ui->chatDisplay->setModel(m_model);
+
     connectSignals();
     setupUI();
 
-    // チャットウィジェットの作成
-    m_chatWidget = new ChatWidget(client, this);
-    ui->chatContainer->layout()->addWidget(m_chatWidget);
-
-    // LMStudioClientのシグナルをステータスバーに接続
-    connect(client, &LMStudioClient::requestStarted, this,
+    // LMStudioClientのシグナルを接続
+    connect(m_client, &LMStudioClient::replyReceived, this,
+            &MainWindow::onReplyReceived);
+    connect(m_client, &LMStudioClient::errorOccurred, this,
+            &MainWindow::onErrorOccurred);
+    connect(m_client, &LMStudioClient::requestStarted, this,
             &MainWindow::onApiRequestStarted);
-    connect(client, &LMStudioClient::requestCompleted, this,
+    connect(m_client, &LMStudioClient::requestCompleted, this,
             &MainWindow::onApiRequestFinished);
 }
 
@@ -42,6 +47,57 @@ void MainWindow::connectSignals() {
         QMessageBox::about(this, "バージョン情報",
                            "FlexiChat v1.0.0\n\nQt + CMake AIチャットアプリ");
     });
+
+    // ウィジェットのシグナルとスロットを接続
+    connect(ui->sendButton, &QPushButton::clicked, this,
+            &MainWindow::onSendClicked);
+    connect(ui->inputField, &QLineEdit::returnPressed, this,
+            &MainWindow::onSendClicked);
+}
+
+/**
+ * @brief 送信ボタンがクリックされたときの処理
+ */
+void MainWindow::onSendClicked() {
+    QString message = ui->inputField->text().trimmed();
+    if (message.isEmpty()) {
+        return;
+    }
+
+    // ユーザーのメッセージを表示
+    appendMessage("user", message);
+
+    // 入力フィールドをクリア
+    ui->inputField->clear();
+    ui->inputField->setEnabled(false);
+    ui->sendButton->setEnabled(false);
+
+    // AIに送信
+    m_client->sendRequest(message);
+}
+
+/**
+ * @brief AIからの応答を受信したときの処理
+ */
+void MainWindow::onReplyReceived(const QString &reply) {
+    appendMessage("assistant", reply);
+
+    // 入力を再度有効化
+    ui->inputField->setEnabled(true);
+    ui->sendButton->setEnabled(true);
+    ui->inputField->setFocus();
+}
+
+/**
+ * @brief エラーが発生したときの処理
+ */
+void MainWindow::onErrorOccurred(const QString &error) {
+    appendMessage("error", "エラー: " + error);
+
+    // 入力を再度有効化
+    ui->inputField->setEnabled(true);
+    ui->sendButton->setEnabled(true);
+    ui->inputField->setFocus();
 }
 
 /**
@@ -64,4 +120,28 @@ void MainWindow::onApiRequestFinished() {
 void MainWindow::setupUI() {
     // APIステータス表示の設定
     ui->statusbar->showMessage("準備完了");
+}
+
+/**
+ * @brief メッセージをチャット表示に追加
+ * @param role 役割（user/assistant/error）
+ * @param message メッセージ内容
+ */
+void MainWindow::appendMessage(const QString &role, const QString &message) {
+    QString displayMessage;
+    if (role == "user") {
+        displayMessage = QString("You: %1").arg(message);
+    } else if (role == "assistant") {
+        displayMessage = QString("AI: %1").arg(message);
+    } else {
+        displayMessage = message;
+    }
+
+    // モデルに行を追加
+    int row = m_model->rowCount();
+    m_model->insertRow(row);
+    m_model->setData(m_model->index(row), displayMessage);
+
+    // 最下部までスクロール
+    ui->chatDisplay->scrollToBottom();
 }

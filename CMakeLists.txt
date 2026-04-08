@@ -14,8 +14,6 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
     Widgets Network LinguistTools)
 
 set(PROJECT_SOURCES
-    src/ChatWidget.cpp
-    src/ChatWidget.ui
     src/LMStudioClient.cpp
     src/main.cpp
     src/MainWindow.cpp
