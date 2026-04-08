@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QStringListModel>
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -30,6 +31,7 @@ private slots:
 private:
     Ui::ChatWidget *ui;
     LMStudioClient *m_client;
+    QStringListModel *m_model;
 
     void appendMessage(const QString &role, const QString &message);
 };

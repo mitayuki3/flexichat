@@ -9,8 +9,12 @@
  * UIとクライアントのセットアップを行う
  */
 ChatWidget::ChatWidget(QWidget *parent)
-    : QWidget(parent), ui(new Ui::ChatWidget), m_client(nullptr) {
+    : QWidget(parent), ui(new Ui::ChatWidget), m_client(nullptr),
+      m_model(new QStringListModel(this)) {
     ui->setupUi(this);
+
+    // モデルのセットアップ
+    ui->chatDisplay->setModel(m_model);
 
     // LM Studioクライアントの初期化
     m_client = new LMStudioClient(this);
@@ -82,21 +86,20 @@ void ChatWidget::onErrorOccurred(const QString &error) {
  * @param message メッセージ内容
  */
 void ChatWidget::appendMessage(const QString &role, const QString &message) {
-    QString html;
+    QString displayMessage;
     if (role == "user") {
-        html = QString("<p><b style='color: #1a73e8;'>You:</b> %1</p>")
-                   .arg(message.toHtmlEscaped());
+        displayMessage = QString("You: %1").arg(message);
     } else if (role == "assistant") {
-        html = QString("<p><b style='color: #0d7c66;'>AI:</b> %1</p>")
-                   .arg(message.toHtmlEscaped());
+        displayMessage = QString("AI: %1").arg(message);
     } else {
-        html = QString("<p><b style='color: #d93025;'>%1</b></p>")
-                   .arg(message.toHtmlEscaped());
+        displayMessage = message;
     }
 
-    ui->chatDisplay->append(html);
+    // モデルに行を追加
+    int row = m_model->rowCount();
+    m_model->insertRow(row);
+    m_model->setData(m_model->index(row), displayMessage);
 
-    // スクロールバーを最下部に移動
-    QScrollBar *scrollBar = ui->chatDisplay->verticalScrollBar();
-    scrollBar->setValue(scrollBar->maximum());
+    // 最下部までスクロール
+    ui->chatDisplay->scrollToBottom();
 }
