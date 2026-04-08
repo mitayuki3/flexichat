@@ -25,17 +25,10 @@ public:
     void sendRequest(const QString &message);
 
 signals:
-    /**
-     * @brief 応答を受信したときに発行されるシグナル
-     * @param reply 応答メッセージ
-     */
     void replyReceived(const QString &reply);
-
-    /**
-     * @brief エラーが発生したときに発行されるシグナル
-     * @param error エラーメッセージ
-     */
     void errorOccurred(const QString &error);
+    void requestStarted();
+    void requestCompleted();
 
 private slots:
     void onReplyFinished(QNetworkReply *reply);

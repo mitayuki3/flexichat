@@ -9,6 +9,7 @@ class MainWindow;
 QT_END_NAMESPACE
 
 class ChatWidget;
+class LMStudioClient;
 
 /**
  * @brief メインウィンドウクラス
@@ -18,7 +19,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(LMStudioClient *client, QWidget *parent = nullptr);
     ~MainWindow() override;
 
 private:
@@ -27,4 +28,8 @@ private:
 
     void setupUI();
     void connectSignals();
+
+private slots:
+    void onApiRequestStarted();
+    void onApiRequestFinished();
 };

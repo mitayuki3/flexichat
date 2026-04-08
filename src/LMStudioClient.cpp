@@ -66,6 +66,9 @@ void LMStudioClient::sendRequest(const QString &message)
 
     // POSTリクエストの送信
     m_networkManager->post(request, data);
+
+    // リクエスト開始シグナルを発行
+    emit requestStarted();
 }
 
 /**
@@ -113,6 +116,9 @@ void LMStudioClient::onReplyFinished(QNetworkReply *reply)
 
     // 応答シグナルの発行
     emit replyReceived(assistantReply);
+
+    // リクエスト完了シグナルを発行
+    emit requestCompleted();
 }
 
 /**
@@ -140,4 +146,7 @@ void LMStudioClient::handleNetworkError(QNetworkReply *reply)
     }
 
     emit errorOccurred(errorMsg);
+
+    // リクエスト完了シグナルを発行（エラー時も完了扱い）
+    emit requestCompleted();
 }

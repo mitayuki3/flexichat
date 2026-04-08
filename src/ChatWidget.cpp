@@ -8,16 +8,14 @@
  * @brief コンストラクタ
  * UIとクライアントのセットアップを行う
  */
-ChatWidget::ChatWidget(QWidget *parent)
-    : QWidget(parent), ui(new Ui::ChatWidget), m_client(nullptr),
+ChatWidget::ChatWidget(LMStudioClient *client, QWidget *parent)
+    : QWidget(parent), ui(new Ui::ChatWidget), m_client(client),
       m_model(new QStringListModel(this)) {
     ui->setupUi(this);
 
     // モデルのセットアップ
     ui->chatDisplay->setModel(m_model);
 
-    // LM Studioクライアントの初期化
-    m_client = new LMStudioClient(this);
     connect(m_client, &LMStudioClient::replyReceived, this,
             &ChatWidget::onReplyReceived);
     connect(m_client, &LMStudioClient::errorOccurred, this,

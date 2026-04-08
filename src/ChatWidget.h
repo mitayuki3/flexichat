@@ -20,7 +20,7 @@ class ChatWidget : public QWidget {
     Q_OBJECT
 
 public:
-    explicit ChatWidget(QWidget *parent = nullptr);
+    explicit ChatWidget(LMStudioClient *client, QWidget *parent = nullptr);
     ~ChatWidget() override;
 
 private slots:
