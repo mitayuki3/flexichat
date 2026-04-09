@@ -49,5 +49,4 @@ private:
     void connectSignals();
     void appendMessage(const QString &role, const QString &message);
     void populateProfileCombo();
-    bool confirmProfileSwitch();
 };

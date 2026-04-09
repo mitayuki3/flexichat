@@ -113,23 +113,6 @@ void MainWindow::populateProfileCombo() {
 }
 
 /**
- * @brief プロファイル切り替えの確認
- */
-bool MainWindow::confirmProfileSwitch() {
-    if (m_model->rowCount() == 0) {
-        return true;
-    }
-
-    auto result = QMessageBox::question(
-        this, "プロファイル切り替え",
-        "プロファイルを切り替えると、チャット履歴がクリアされます。\n"
-        "続行しますか？",
-        QMessageBox::Yes | QMessageBox::No);
-
-    return result == QMessageBox::Yes;
-}
-
-/**
  * @brief プロファイルコンボボックスの選択変更
  */
 void MainWindow::onProfileComboActivated(int index) {
@@ -138,17 +121,7 @@ void MainWindow::onProfileComboActivated(int index) {
         return;
     }
 
-    if (!confirmProfileSwitch()) {
-        int currentIdx =
-            m_profileCombo->findData(m_profileManager->getActiveProfileId());
-        if (currentIdx >= 0) {
-            m_profileCombo->setCurrentIndex(currentIdx);
-        }
-        return;
-    }
-
-    m_client->resetChatHistory();
-    m_model->setStringList({});
+    // 履歴は保持したまま、プロファイルのみ切り替え
     m_profileManager->setActiveProfile(id);
 }
 
@@ -167,6 +140,7 @@ void MainWindow::openSettings() {
 void MainWindow::onProfileChanged(const SystemPromptProfile &profile) {
     Q_UNUSED(profile);
     populateProfileCombo();
+    m_client->setProfile(m_profileManager->getActiveProfile());
     ui->statusbar->showMessage(
         "プロファイル: " + m_profileManager->getActiveProfile().displayName(),
         3000);
