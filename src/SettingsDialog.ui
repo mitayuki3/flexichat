@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SettingsDialog</class>
+ <widget class="QDialog" name="SettingsDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>700</width>
+    <height>550</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>設定</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <!-- Left panel: profile list -->
+   <item>
+    <layout class="QVBoxLayout" name="leftLayout">
+     <item>
+      <widget class="QLabel" name="profileListLabel">
+       <property name="text">
+        <string>プロファイル</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListWidget" name="profileListWidget">
+       <property name="selectionMode">
+        <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="listButtonLayout">
+       <item>
+        <widget class="QPushButton" name="addProfileButton">
+         <property name="text">
+          <string>+ 追加</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="deleteProfileButton">
+         <property name="text">
+          <string>× 削除</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <!-- Right panel: editor -->
+   <item>
+    <layout class="QVBoxLayout" name="rightLayout">
+     <!-- Profile details -->
+     <item>
+      <widget class="QGroupBox" name="detailsGroupBox">
+       <property name="title">
+        <string>プロファイル詳細</string>
+       </property>
+       <layout class="QFormLayout" name="detailsFormLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="nameLabel">
+          <property name="text">
+           <string>名前:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="nameEdit">
+          <property name="placeholderText">
+           <string>プロファイル名</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="iconLabel">
+          <property name="text">
+           <string>アイコン:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="iconEdit">
+          <property name="maximumWidth">
+           <number>80</number>
+          </property>
+          <property name="placeholderText">
+           <string>💬</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="promptLabel">
+          <property name="text">
+           <string>システムプロンプト:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QTextEdit" name="promptEdit">
+          <property name="minimumHeight">
+           <number>150</number>
+          </property>
+          <property name="placeholderText">
+           <string>システムプロンプトを入力...</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <!-- API settings -->
+     <item>
+      <widget class="QGroupBox" name="apiGroupBox">
+       <property name="title">
+        <string>API設定</string>
+       </property>
+       <layout class="QFormLayout" name="apiFormLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="baseUrlLabel">
+          <property name="text">
+           <string>ベースURL:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="baseUrlEdit">
+          <property name="placeholderText">
+           <string>http://localhost:1234</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="temperatureLabel">
+          <property name="text">
+           <string>Temperature:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QDoubleSpinBox" name="temperatureSpin">
+          <property name="maximum">
+           <double>2.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.700000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="maxTokensLabel">
+          <property name="text">
+           <string>Max Tokens:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QSpinBox" name="maxTokensSpin">
+          <property name="minimum">
+           <number>64</number>
+          </property>
+          <property name="maximum">
+           <number>16384</number>
+          </property>
+          <property name="singleStep">
+           <number>128</number>
+          </property>
+          <property name="value">
+           <number>2048</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <!-- Connection test -->
+     <item>
+      <layout class="QHBoxLayout" name="testLayout">
+       <item>
+        <widget class="QPushButton" name="testConnectionButton">
+         <property name="text">
+          <string>接続テスト</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="testResultLabel">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="testSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <!-- Dialog buttons -->
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Save</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

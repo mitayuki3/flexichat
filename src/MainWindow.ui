@@ -85,6 +85,8 @@
     <property name="title">
      <string>ファイル</string>
     </property>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -96,6 +98,27 @@
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
   </widget>
+  <widget class="QToolBar" name="profileToolBar">
+   <property name="windowTitle">
+    <string>プロファイル</string>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>16</width>
+     <height>16</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="separator"/>
+  </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
    <property name="text">
@@ -105,6 +128,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>バージョン情報</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>設定</string>
    </property>
   </action>
  </widget>

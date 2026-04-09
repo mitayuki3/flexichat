@@ -1,23 +1,41 @@
 #include "MainWindow.h"
 #include "LMStudioClient.h"
+#include "ProfileManager.h"
+#include "SettingsDialog.h"
 #include "ui_MainWindow.h"
+#include <QComboBox>
+#include <QLabel>
 #include <QMessageBox>
 #include <QScrollBar>
+#include <QToolBar>
 
 /**
  * @brief コンストラクタ
  * UIのセットアップを行う
  */
-MainWindow::MainWindow(LMStudioClient *client, QWidget *parent)
+MainWindow::MainWindow(LMStudioClient *client, ProfileManager *profileManager,
+                       QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_client(client),
-      m_model(new QStringListModel(this)) {
+      m_profileManager(profileManager), m_model(new QStringListModel(this)),
+      m_profileCombo(nullptr) {
     ui->setupUi(this);
 
     // モデルのセットアップ
     ui->chatDisplay->setModel(m_model);
 
-    connectSignals();
     setupUI();
+    setupToolbar();
+    connectSignals();
+    populateProfileCombo();
+
+    // 初期プロファイルをクライアントに設定
+    m_client->setProfile(m_profileManager->getActiveProfile());
+
+    // ProfileManagerのシグナルを接続
+    connect(m_profileManager, &ProfileManager::activeProfileChanged, this,
+            &MainWindow::onProfileChanged);
+    connect(m_profileManager, &ProfileManager::profileListChanged, this,
+            &MainWindow::onProfileListChanged);
 
     // LMStudioClientのシグナルを接続
     connect(m_client, &LMStudioClient::replyReceived, this,
@@ -39,21 +57,125 @@ MainWindow::~MainWindow() { delete ui; }
  * @brief シグナル接続の設定
  */
 void MainWindow::connectSignals() {
-    // 終了アクションの接続
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
 
-    // バージョン情報アクションの接続
     connect(ui->actionAbout, &QAction::triggered, this, [this]() {
         QMessageBox::about(this, "バージョン情報",
                            "FlexiChat v1.0.0\n\nQt + CMake AIチャットアプリ");
     });
 
-    // ウィジェットのシグナルとスロットを接続
+    connect(ui->actionSettings, &QAction::triggered, this,
+            &MainWindow::openSettings);
+
     connect(ui->sendButton, &QPushButton::clicked, this,
             &MainWindow::onSendClicked);
     connect(ui->inputField, &QLineEdit::returnPressed, this,
             &MainWindow::onSendClicked);
 }
+
+/**
+ * @brief ツールバーのセットアップ
+ */
+void MainWindow::setupToolbar() {
+    auto *toolbar = ui->profileToolBar;
+
+    // プロファイル切り替えコンボボックス
+    auto *label = new QLabel("プロファイル: ");
+    toolbar->addWidget(label);
+
+    m_profileCombo = new QComboBox();
+    m_profileCombo->setMinimumWidth(200);
+    toolbar->addWidget(m_profileCombo);
+
+    connect(m_profileCombo, QOverload<int>::of(&QComboBox::activated), this,
+            &MainWindow::onProfileComboActivated);
+}
+
+/**
+ * @brief プロファイルコンボボックスの更新
+ */
+void MainWindow::populateProfileCombo() {
+    QString currentId = m_profileCombo->currentData().toString();
+    m_profileCombo->clear();
+
+    auto profiles = m_profileManager->getAllProfiles();
+    int activeIdx = 0;
+
+    for (int i = 0; i < profiles.size(); ++i) {
+        const auto &p = profiles[i];
+        m_profileCombo->addItem(p.displayName(), p.id);
+        if (p.id == m_profileManager->getActiveProfileId()) {
+            activeIdx = i;
+        }
+    }
+
+    m_profileCombo->setCurrentIndex(activeIdx);
+}
+
+/**
+ * @brief プロファイル切り替えの確認
+ */
+bool MainWindow::confirmProfileSwitch() {
+    if (m_model->rowCount() == 0) {
+        return true;
+    }
+
+    auto result = QMessageBox::question(
+        this, "プロファイル切り替え",
+        "プロファイルを切り替えると、チャット履歴がクリアされます。\n"
+        "続行しますか？",
+        QMessageBox::Yes | QMessageBox::No);
+
+    return result == QMessageBox::Yes;
+}
+
+/**
+ * @brief プロファイルコンボボックスの選択変更
+ */
+void MainWindow::onProfileComboActivated(int index) {
+    QString id = m_profileCombo->itemData(index).toString();
+    if (id.isEmpty() || id == m_profileManager->getActiveProfileId()) {
+        return;
+    }
+
+    if (!confirmProfileSwitch()) {
+        int currentIdx =
+            m_profileCombo->findData(m_profileManager->getActiveProfileId());
+        if (currentIdx >= 0) {
+            m_profileCombo->setCurrentIndex(currentIdx);
+        }
+        return;
+    }
+
+    m_client->resetChatHistory();
+    m_model->setStringList({});
+    m_profileManager->setActiveProfile(id);
+}
+
+/**
+ * @brief 設定ダイアログを開く
+ */
+void MainWindow::openSettings() {
+    SettingsDialog dialog(m_profileManager, m_client, this);
+    dialog.exec();
+    populateProfileCombo();
+}
+
+/**
+ * @brief プロファイル変更時の処理
+ */
+void MainWindow::onProfileChanged(const SystemPromptProfile &profile) {
+    Q_UNUSED(profile);
+    populateProfileCombo();
+    ui->statusbar->showMessage(
+        "プロファイル: " + m_profileManager->getActiveProfile().displayName(),
+        3000);
+}
+
+/**
+ * @brief プロファイルリスト変更時の処理
+ */
+void MainWindow::onProfileListChanged() { populateProfileCombo(); }
 
 /**
  * @brief 送信ボタンがクリックされたときの処理
@@ -64,15 +186,12 @@ void MainWindow::onSendClicked() {
         return;
     }
 
-    // ユーザーのメッセージを表示
     appendMessage("user", message);
 
-    // 入力フィールドをクリア
     ui->inputField->clear();
     ui->inputField->setEnabled(false);
     ui->sendButton->setEnabled(false);
 
-    // AIに送信
     m_client->sendRequest(message);
 }
 
@@ -82,7 +201,6 @@ void MainWindow::onSendClicked() {
 void MainWindow::onReplyReceived(const QString &reply) {
     appendMessage("assistant", reply);
 
-    // 入力を再度有効化
     ui->inputField->setEnabled(true);
     ui->sendButton->setEnabled(true);
     ui->inputField->setFocus();
@@ -94,7 +212,6 @@ void MainWindow::onReplyReceived(const QString &reply) {
 void MainWindow::onErrorOccurred(const QString &error) {
     appendMessage("error", "エラー: " + error);
 
-    // 入力を再度有効化
     ui->inputField->setEnabled(true);
     ui->sendButton->setEnabled(true);
     ui->inputField->setFocus();
@@ -117,10 +234,7 @@ void MainWindow::onApiRequestFinished() {
 /**
  * @brief UIのセットアップ
  */
-void MainWindow::setupUI() {
-    // APIステータス表示の設定
-    ui->statusbar->showMessage("準備完了");
-}
+void MainWindow::setupUI() { ui->statusbar->showMessage("準備完了"); }
 
 /**
  * @brief メッセージをチャット表示に追加
@@ -137,11 +251,9 @@ void MainWindow::appendMessage(const QString &role, const QString &message) {
         displayMessage = message;
     }
 
-    // モデルに行を追加
     int row = m_model->rowCount();
     m_model->insertRow(row);
     m_model->setData(m_model->index(row), displayMessage);
 
-    // 最下部までスクロール
     ui->chatDisplay->scrollToBottom();
 }

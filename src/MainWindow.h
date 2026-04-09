@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QComboBox>
 #include <QMainWindow>
 #include <QStringListModel>
 
@@ -10,6 +11,8 @@ class MainWindow;
 QT_END_NAMESPACE
 
 class LMStudioClient;
+class ProfileManager;
+struct SystemPromptProfile;
 
 /**
  * @brief メインウィンドウクラス
@@ -19,7 +22,8 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    explicit MainWindow(LMStudioClient *client, QWidget *parent = nullptr);
+    explicit MainWindow(LMStudioClient *client, ProfileManager *profileManager,
+                        QWidget *parent = nullptr);
     ~MainWindow() override;
 
 private slots:
@@ -28,13 +32,22 @@ private slots:
     void onErrorOccurred(const QString &error);
     void onApiRequestStarted();
     void onApiRequestFinished();
+    void onProfileChanged(const SystemPromptProfile &profile);
+    void onProfileListChanged();
+    void onProfileComboActivated(int index);
+    void openSettings();
 
 private:
     Ui::MainWindow *ui;
     LMStudioClient *m_client;
+    ProfileManager *m_profileManager;
     QStringListModel *m_model;
+    QComboBox *m_profileCombo;
 
     void setupUI();
+    void setupToolbar();
     void connectSignals();
     void appendMessage(const QString &role, const QString &message);
+    void populateProfileCombo();
+    bool confirmProfileSwitch();
 };
