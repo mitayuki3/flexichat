@@ -2,6 +2,7 @@
 #include "LMStudioClient.h"
 #include "MainWindow.h"
 #include "ProfileManager.h"
+#include "SettingsDialog.h"
 #include <QApplication>
 #include <QFont>
 #include <QScopedPointer>
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
     client->setProfile(profileManager->getActiveProfile());
 
     // メインウィンドウの作成と表示
-    MainWindow mainWindow(client.data(), profileManager.data());
+    MainWindow mainWindow(profileManager.data());
     mainWindow.show();
 
     // ProfileManagerのシグナルをMainWindowに接続
@@ -42,8 +43,36 @@ int main(int argc, char *argv[]) {
                      &MainWindow::onErrorOccurred);
     QObject::connect(client.data(), &LMStudioClient::requestStarted, &mainWindow,
                      &MainWindow::onApiRequestStarted);
-    QObject::connect(client.data(), &LMStudioClient::requestCompleted, &mainWindow,
-                     &MainWindow::onApiRequestFinished);
+    QObject::connect(client.data(), &LMStudioClient::requestCompleted,
+                     &mainWindow, &MainWindow::onApiRequestFinished);
+
+    // MainWindow → LMStudioClient のシグナル仲介
+    auto *rawClient = client.data();
+    QObject::connect(&mainWindow, &MainWindow::requestSend, client.data(),
+                     &LMStudioClient::sendRequest);
+    QObject::connect(
+        &mainWindow, &MainWindow::profileChangeRequested, &mainWindow,
+        [rawClient, profileManager = profileManager.data()](const QString &id) {
+            auto *profile = profileManager->getProfileById(id);
+            if (profile) {
+                rawClient->setProfile(*profile);
+            }
+        });
+
+    // 設定ダイアログの表示（シグナル経由で開く）
+    QObject::connect(
+        &mainWindow, &MainWindow::openSettingsRequested, &mainWindow,
+        [rawClient, profileManager = profileManager.data()]() {
+            SettingsDialog dialog(profileManager);
+
+            // 接続テストのシグナル仲介
+            QObject::connect(&dialog, &SettingsDialog::connectionTestRequested,
+                             rawClient, &LMStudioClient::testConnection);
+            QObject::connect(rawClient, &LMStudioClient::connectionTestResult,
+                             &dialog, &SettingsDialog::onConnectionTestResult);
+
+            dialog.exec();
+        });
 
     return app.exec();
 }

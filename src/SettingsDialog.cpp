@@ -1,14 +1,12 @@
 #include "SettingsDialog.h"
-#include "LMStudioClient.h"
 #include "ProfileManager.h"
 #include "ui_SettingsDialog.h"
 #include <QListWidgetItem>
 #include <QMessageBox>
 
-SettingsDialog::SettingsDialog(ProfileManager *profileManager,
-                               LMStudioClient *client, QWidget *parent)
+SettingsDialog::SettingsDialog(ProfileManager *profileManager, QWidget *parent)
     : QDialog(parent), ui(new Ui::SettingsDialog),
-      m_profileManager(profileManager), m_client(client) {
+      m_profileManager(profileManager) {
     ui->setupUi(this);
 
     populateProfileList();
@@ -133,18 +131,16 @@ void SettingsDialog::onSave() {
 
 void SettingsDialog::onConnectionTest() {
     ui->testResultLabel->setText("テスト中...");
-    m_client->testConnection();
+    emit connectionTestRequested();
+}
 
-    connect(
-        m_client, &LMStudioClient::connectionTestResult, this,
-        [this](bool success, const QString &message) {
-            ui->testResultLabel->setText(success ? "\u2713 " + message
-                                                 : "\u2717 " + message);
-            if (!success) {
-                QMessageBox::warning(this, "\u63a5\u7d9a\u30a8\u30e9\u30fc", message);
-            }
-        },
-        Qt::SingleShotConnection);
+void SettingsDialog::onConnectionTestResult(bool success,
+                                            const QString &message) {
+    ui->testResultLabel->setText(success ? "\u2713 " + message
+                                         : "\u2717 " + message);
+    if (!success) {
+        QMessageBox::warning(this, "接続エラー", message);
+    }
 }
 
 SystemPromptProfile SettingsDialog::buildProfileFromFields() const {

@@ -4,7 +4,6 @@
 #include <QDialog>
 
 class ProfileManager;
-class LMStudioClient;
 
 namespace Ui {
 class SettingsDialog;
@@ -15,8 +14,14 @@ class SettingsDialog : public QDialog {
 
 public:
     explicit SettingsDialog(ProfileManager *profileManager,
-                            LMStudioClient *client, QWidget *parent = nullptr);
+                            QWidget *parent = nullptr);
     ~SettingsDialog() override;
+
+signals:
+    void connectionTestRequested();
+
+public slots:
+    void onConnectionTestResult(bool success, const QString &message);
 
 private slots:
     void onProfileSelected();
@@ -28,7 +33,6 @@ private slots:
 private:
     Ui::SettingsDialog *ui;
     ProfileManager *m_profileManager;
-    LMStudioClient *m_client;
     QString m_currentEditingId;
 
     void populateProfileList();

@@ -1,5 +1,4 @@
 #include "MainWindow.h"
-#include "LMStudioClient.h"
 #include "ProfileManager.h"
 #include "SettingsDialog.h"
 #include "ui_MainWindow.h"
@@ -11,9 +10,8 @@
  * @brief コンストラクタ
  * UIのセットアップを行う
  */
-MainWindow::MainWindow(LMStudioClient *client, ProfileManager *profileManager,
-                       QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), m_client(client),
+MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
+    : QMainWindow(parent), ui(new Ui::MainWindow),
       m_profileManager(profileManager), m_model(new QStringListModel(this)),
       m_profileCombo(nullptr) {
     ui->setupUi(this);
@@ -26,8 +24,8 @@ MainWindow::MainWindow(LMStudioClient *client, ProfileManager *profileManager,
     connectSignals();
     populateProfileCombo();
 
-    // 初期プロファイルをクライアントに設定
-    m_client->setProfile(m_profileManager->getActiveProfile());
+    // 初期プロファイルをクライアントに設定（シグナル経由）
+    emit profileChangeRequested(m_profileManager->getActiveProfileId());
 }
 
 /**
@@ -47,7 +45,7 @@ void MainWindow::connectSignals() {
     });
 
     connect(ui->actionSettings, &QAction::triggered, this,
-            &MainWindow::openSettings);
+            &MainWindow::openSettingsRequested);
 
     connect(ui->sendButton, &QPushButton::clicked, this,
             &MainWindow::onSendClicked);
@@ -108,21 +106,12 @@ void MainWindow::onProfileComboActivated(int index) {
 }
 
 /**
- * @brief 設定ダイアログを開く
- */
-void MainWindow::openSettings() {
-    SettingsDialog dialog(m_profileManager, m_client, this);
-    dialog.exec();
-    populateProfileCombo();
-}
-
-/**
  * @brief プロファイル変更時の処理
  */
 void MainWindow::onProfileChanged(const SystemPromptProfile &profile) {
     Q_UNUSED(profile);
     populateProfileCombo();
-    m_client->setProfile(m_profileManager->getActiveProfile());
+    emit profileChangeRequested(m_profileManager->getActiveProfileId());
     ui->statusbar->showMessage(
         "プロファイル: " + m_profileManager->getActiveProfile().displayName(),
         3000);
@@ -148,7 +137,7 @@ void MainWindow::onSendClicked() {
     ui->inputField->setEnabled(false);
     ui->sendButton->setEnabled(false);
 
-    m_client->sendRequest(message);
+    emit requestSend(message);
 }
 
 /**
