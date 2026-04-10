@@ -6,8 +6,6 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QMessageBox>
-#include <QScrollBar>
-#include <QToolBar>
 
 /**
  * @brief コンストラクタ
@@ -30,22 +28,6 @@ MainWindow::MainWindow(LMStudioClient *client, ProfileManager *profileManager,
 
     // 初期プロファイルをクライアントに設定
     m_client->setProfile(m_profileManager->getActiveProfile());
-
-    // ProfileManagerのシグナルを接続
-    connect(m_profileManager, &ProfileManager::activeProfileChanged, this,
-            &MainWindow::onProfileChanged);
-    connect(m_profileManager, &ProfileManager::profileListChanged, this,
-            &MainWindow::onProfileListChanged);
-
-    // LMStudioClientのシグナルを接続
-    connect(m_client, &LMStudioClient::replyReceived, this,
-            &MainWindow::onReplyReceived);
-    connect(m_client, &LMStudioClient::errorOccurred, this,
-            &MainWindow::onErrorOccurred);
-    connect(m_client, &LMStudioClient::requestStarted, this,
-            &MainWindow::onApiRequestStarted);
-    connect(m_client, &LMStudioClient::requestCompleted, this,
-            &MainWindow::onApiRequestFinished);
 }
 
 /**

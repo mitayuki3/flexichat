@@ -26,14 +26,16 @@ public:
                         QWidget *parent = nullptr);
     ~MainWindow() override;
 
-private slots:
-    void onSendClicked();
+public slots:
     void onReplyReceived(const QString &reply);
     void onErrorOccurred(const QString &error);
     void onApiRequestStarted();
     void onApiRequestFinished();
     void onProfileChanged(const SystemPromptProfile &profile);
     void onProfileListChanged();
+
+private slots:
+    void onSendClicked();
     void onProfileComboActivated(int index);
     void openSettings();
 
