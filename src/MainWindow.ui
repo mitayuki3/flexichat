@@ -41,6 +41,9 @@
       <property name="editTriggers">
        <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
       </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+      </property>
       <property name="resizeMode">
        <enum>QListView::ResizeMode::Adjust</enum>
       </property>
@@ -58,6 +61,26 @@
        <widget class="QLineEdit" name="inputField">
         <property name="placeholderText">
          <string>メッセージを入力...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="playTtsButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>音声再生</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="stopTtsButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>停止</string>
         </property>
        </widget>
       </item>
