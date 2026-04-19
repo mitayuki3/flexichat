@@ -23,10 +23,24 @@ public:
     void saveApiBaseUrl(const QString &url);
     QString loadApiBaseUrl() const;
 
+    // TTS settings
+    void saveTtsApiKey(const QString &key);
+    QString loadTtsApiKey() const;
+    void saveTtsVoice(const QString &voice);
+    QString loadTtsVoice() const;
+    void saveTtsAutoPlay(bool enabled);
+    bool loadTtsAutoPlay() const;
+    void saveTtsBaseUrl(const QString &url);
+    QString loadTtsBaseUrl() const;
+
 private:
     QSettings m_settings;
 
     static const QString KEY_PROFILES;
     static const QString KEY_ACTIVE_PROFILE;
     static const QString KEY_API_BASE_URL;
+    static const QString KEY_TTS_API_KEY;
+    static const QString KEY_TTS_VOICE;
+    static const QString KEY_TTS_AUTO_PLAY;
+    static const QString KEY_TTS_BASE_URL;
 };

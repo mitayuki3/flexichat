@@ -6,6 +6,10 @@
 const QString AppSettings::KEY_PROFILES = "Profiles/Data";
 const QString AppSettings::KEY_ACTIVE_PROFILE = "General/ActiveProfileId";
 const QString AppSettings::KEY_API_BASE_URL = "General/ApiBaseUrl";
+const QString AppSettings::KEY_TTS_API_KEY = "Tts/ApiKey";
+const QString AppSettings::KEY_TTS_VOICE = "Tts/Voice";
+const QString AppSettings::KEY_TTS_AUTO_PLAY = "Tts/AutoPlay";
+const QString AppSettings::KEY_TTS_BASE_URL = "Tts/BaseUrl";
 
 AppSettings::AppSettings(QObject *parent)
     : QObject(parent), m_settings(QSettings::IniFormat, QSettings::UserScope,
@@ -69,4 +73,37 @@ void AppSettings::saveApiBaseUrl(const QString &url) {
 
 QString AppSettings::loadApiBaseUrl() const {
     return m_settings.value(KEY_API_BASE_URL, "http://localhost:1234").toString();
+}
+
+// TTS 設定用関数
+void AppSettings::saveTtsApiKey(const QString &key) {
+    m_settings.setValue(KEY_TTS_API_KEY, key);
+}
+
+QString AppSettings::loadTtsApiKey() const {
+    return m_settings.value(KEY_TTS_API_KEY, "").toString();
+}
+
+void AppSettings::saveTtsVoice(const QString &voice) {
+    m_settings.setValue(KEY_TTS_VOICE, voice);
+}
+
+QString AppSettings::loadTtsVoice() const {
+    return m_settings.value(KEY_TTS_VOICE, "alloy").toString();
+}
+
+void AppSettings::saveTtsAutoPlay(bool enabled) {
+    m_settings.setValue(KEY_TTS_AUTO_PLAY, enabled);
+}
+
+bool AppSettings::loadTtsAutoPlay() const {
+    return m_settings.value(KEY_TTS_AUTO_PLAY, false).toBool();
+}
+
+void AppSettings::saveTtsBaseUrl(const QString &url) {
+    m_settings.setValue(KEY_TTS_BASE_URL, url);
+}
+
+QString AppSettings::loadTtsBaseUrl() const {
+    return m_settings.value(KEY_TTS_BASE_URL, "http://localhost:8880").toString();
 }
