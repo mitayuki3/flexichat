@@ -1,6 +1,7 @@
 #include "AppSettings.h"
 #include "LMStudioClient.h"
 #include "MainWindow.h"
+#include "OpenAITTSClient.h"
 #include "ProfileManager.h"
 #include "SettingsDialog.h"
 #include <QApplication>
@@ -15,9 +16,15 @@ int main(int argc, char *argv[]) {
     // 設定の読み込み
     AppSettings settings;
 
-    // LM Studioクライアントの作成
+    // LM Studio クライアントの作成
     QScopedPointer<LMStudioClient> client(new LMStudioClient());
     client->setBaseUrl(settings.loadApiBaseUrl());
+
+    // TTS クライアントの作成
+    QScopedPointer<OpenAITTSClient> ttsClient(new OpenAITTSClient());
+    ttsClient->setBaseUrl(settings.loadTtsBaseUrl());
+    ttsClient->setVoice(settings.loadTtsVoice());
+    ttsClient->setApiKey(settings.loadTtsApiKey());
 
     // プロファイルマネージャーの作成
     QScopedPointer<ProfileManager> profileManager(new ProfileManager(&settings));
@@ -30,13 +37,13 @@ int main(int argc, char *argv[]) {
     MainWindow mainWindow(profileManager.data());
     mainWindow.show();
 
-    // ProfileManagerのシグナルをMainWindowに接続
+    // ProfileManager のシグナルを MainWindow に接続
     QObject::connect(profileManager.data(), &ProfileManager::activeProfileChanged,
                      &mainWindow, &MainWindow::onProfileChanged);
     QObject::connect(profileManager.data(), &ProfileManager::profileListChanged,
                      &mainWindow, &MainWindow::onProfileListChanged);
 
-    // LMStudioClientのシグナルをMainWindowに接続
+    // LMStudioClient のシグナルを MainWindow に接続
     QObject::connect(client.data(), &LMStudioClient::replyReceived, &mainWindow,
                      &MainWindow::onReplyReceived);
     QObject::connect(client.data(), &LMStudioClient::errorOccurred, &mainWindow,
@@ -58,6 +65,25 @@ int main(int argc, char *argv[]) {
                 rawClient->setProfile(*profile);
             }
         });
+
+    // TTS シグナルの接続（MainWindow → OpenAITTSClient）
+    QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, ttsClient.data(),
+                     [rawTtsClient = ttsClient.data(), &mainWindow]() {
+                         QString text = mainWindow.getPendingTtsText();
+                         if (!text.isEmpty()) {
+                             rawTtsClient->synthesize(text);
+                         }
+                     });
+    QObject::connect(&mainWindow, &MainWindow::stopTtsRequested, ttsClient.data(),
+                     &OpenAITTSClient::stop);
+
+    // TTS → MainWindow のシグナル接続（再生状態の更新）
+    QObject::connect(ttsClient.data(), &OpenAITTSClient::playbackStarted, &mainWindow,
+                     &MainWindow::syncTtsButtons);
+    QObject::connect(ttsClient.data(), &OpenAITTSClient::playbackFinished, &mainWindow,
+                     &MainWindow::syncTtsButtons);
+    QObject::connect(ttsClient.data(), &OpenAITTSClient::errorOccurred, &mainWindow,
+                     &MainWindow::onErrorOccurred);
 
     // 設定ダイアログの表示（シグナル経由で開く）
     QObject::connect(

@@ -8,12 +8,13 @@
 
 /**
  * @brief コンストラクタ
- * UIのセットアップを行う
+ * UI のセットアップを行う
+ * @param profileManager プロファイルマネージャー
  */
 MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
-      m_profileManager(profileManager), m_model(new QStringListModel(this)),
-      m_profileCombo(nullptr) {
+    m_profileManager(profileManager), m_model(new QStringListModel(this)),
+    m_profileCombo(nullptr), m_lastAssistantMessage(""), m_pendingTtsText("") {
     ui->setupUi(this);
 
     // モデルのセットアップ
@@ -38,10 +39,12 @@ MainWindow::~MainWindow() { delete ui; }
  */
 void MainWindow::connectSignals() {
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
+    connect(ui->chatDisplay, &QListView::clicked, this,
+            &MainWindow::onChatDisplayClicked);
 
     connect(ui->actionAbout, &QAction::triggered, this, [this]() {
         QMessageBox::about(this, "バージョン情報",
-                           "FlexiChat v1.0.0\n\nQt + CMake AIチャットアプリ");
+                           "FlexiChat v1.0.0\n\nQt + CMake AI チャットアプリ");
     });
 
     connect(ui->actionSettings, &QAction::triggered, this,
@@ -51,6 +54,12 @@ void MainWindow::connectSignals() {
             &MainWindow::onSendClicked);
     connect(ui->inputField, &QLineEdit::returnPressed, this,
             &MainWindow::onSendClicked);
+
+    // TTS ボタンの接続
+    connect(ui->playTtsButton, &QPushButton::clicked, this,
+            &MainWindow::onPlayTtsClicked);
+    connect(ui->stopTtsButton, &QPushButton::clicked, this,
+            &MainWindow::onStopTtsClicked);
 }
 
 /**
@@ -141,14 +150,17 @@ void MainWindow::onSendClicked() {
 }
 
 /**
- * @brief AIからの応答を受信したときの処理
+ * @brief AI からの応答を受信したときの処理
  */
 void MainWindow::onReplyReceived(const QString &reply) {
     appendMessage("assistant", reply);
+    m_lastAssistantMessage = reply;
 
     ui->inputField->setEnabled(true);
     ui->sendButton->setEnabled(true);
     ui->inputField->setFocus();
+
+    syncTtsButtons();
 }
 
 /**
@@ -163,27 +175,29 @@ void MainWindow::onErrorOccurred(const QString &error) {
 }
 
 /**
- * @brief APIリクエスト開始時のステータス更新
+ * @brief API リクエスト開始時のステータス更新
  */
 void MainWindow::onApiRequestStarted() {
     ui->statusbar->showMessage("応答を生成中...");
 }
 
 /**
- * @brief APIリクエスト完了時のステータス更新
+ * @brief API リクエスト完了時のステータス更新
  */
 void MainWindow::onApiRequestFinished() {
     ui->statusbar->showMessage("準備完了", 3000);
 }
 
 /**
- * @brief UIのセットアップ
+ * @brief UI のセットアップ
  */
-void MainWindow::setupUI() { ui->statusbar->showMessage("準備完了"); }
+void MainWindow::setupUI() {
+    ui->statusbar->showMessage("準備完了");
+}
 
 /**
  * @brief メッセージをチャット表示に追加
- * @param role 役割（user/assistant/error）
+ * @param role 役割 (user/assistant/error)
  * @param message メッセージ内容
  */
 void MainWindow::appendMessage(const QString &role, const QString &message) {
@@ -201,4 +215,71 @@ void MainWindow::appendMessage(const QString &role, const QString &message) {
     m_model->setData(m_model->index(row), displayMessage);
 
     ui->chatDisplay->scrollToBottom();
+}
+
+/**
+ * @brief 音声再生ボタンクリック時
+ * 選択中のメッセージを TTS で再生（シグナル経由）
+ */
+void MainWindow::onPlayTtsClicked() {
+    QModelIndexList selected = ui->chatDisplay->selectionModel()->selectedIndexes();
+    if (selected.isEmpty()) {
+        QMessageBox::information(this, "選択なし", "チャット履歴から再生したい発言を選択してください。");
+        return;
+    }
+
+    QString text = m_model->data(selected.first()).toString();
+    if (text.isEmpty()) {
+        return;
+    }
+
+    // AI の発言のみ再生可能
+    if (text.startsWith("You:")) {
+        QMessageBox::information(this, "再生不可", "You の発言は再生できません。AI の発言を選択してください。");
+        return;
+    }
+
+    ui->statusbar->showMessage("TTS 再生中...");
+
+    // テキストを保存
+    m_pendingTtsText = text.replace("AI: ", "");
+
+    // シグナルで TTS クライアントに送信（保存したテキストを使用）
+    emit synthesizeRequested(m_pendingTtsText);
+}
+
+/**
+ * @brief 音声停止ボタンクリック時
+ * 再生中の TTS を停止（シグナル経由）
+ */
+void MainWindow::onStopTtsClicked() {
+    m_pendingTtsText = "";
+    emit stopTtsRequested();
+}
+
+/**
+ * @brief チャットディスプレイクリック時
+ * 選択ボタンの同期
+ */
+void MainWindow::onChatDisplayClicked(const QModelIndex &index) {
+    Q_UNUSED(index);
+    syncTtsButtons();
+}
+
+/**
+ * @brief TTS ボタンの同期
+ * 再生中かどうかでボタン状態を切り替え（シグナル経由）
+ */
+void MainWindow::syncTtsButtons() {
+    // TTS クライアントのステータスは main.cpp からシグナルで更新
+    // 再生中でなければ再生ボタン有効
+    ui->playTtsButton->setEnabled(m_pendingTtsText.isEmpty() == false);
+    ui->stopTtsButton->setEnabled(false);
+}
+
+/**
+ * @brief pendingTtsText を返す
+ */
+QString MainWindow::getPendingTtsText() const {
+    return m_pendingTtsText;
 }

@@ -31,21 +31,30 @@ public slots:
     void onApiRequestFinished();
     void onProfileChanged(const SystemPromptProfile &profile);
     void onProfileListChanged();
+    void syncTtsButtons();
+    QString getPendingTtsText() const;
 
 signals:
     void requestSend(const QString &message);
     void profileChangeRequested(const QString &profileId);
     void openSettingsRequested();
+    void synthesizeRequested(const QString &text);
+    void stopTtsRequested();
 
 private slots:
     void onSendClicked();
     void onProfileComboActivated(int index);
+    void onPlayTtsClicked();
+    void onStopTtsClicked();
+    void onChatDisplayClicked(const QModelIndex &index);
 
 private:
     Ui::MainWindow *ui;
     ProfileManager *m_profileManager;
     QStringListModel *m_model;
     QComboBox *m_profileCombo;
+    QString m_lastAssistantMessage;
+    QString m_pendingTtsText;
 
     void setupUI();
     void setupToolbar();
