@@ -60,6 +60,11 @@ void MainWindow::connectSignals() {
             &MainWindow::onPlayTtsClicked);
     connect(ui->stopTtsButton, &QPushButton::clicked, this,
             &MainWindow::onStopTtsClicked);
+
+    connect(ui->chatDisplay, &QListView::activated, this,
+            [this](const QModelIndex &index) {
+                this->m_pendingTtsText = this->m_model->data(index).toString();
+    });
 }
 
 /**
