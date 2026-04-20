@@ -44,7 +44,7 @@ void MainWindow::connectSignals() {
 
     connect(ui->actionAbout, &QAction::triggered, this, [this]() {
         QMessageBox::about(this, "バージョン情報",
-                           "FlexiChat v1.0.0\n\nQt + CMake AI チャットアプリ");
+                           "AI チャットアプリ FlexiChat v1.0.0\nImplemented with Qt");
     });
 
     connect(ui->actionSettings, &QAction::triggered, this,
