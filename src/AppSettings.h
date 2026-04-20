@@ -26,6 +26,8 @@ public:
     // TTS settings
     void saveTtsApiKey(const QString &key);
     QString loadTtsApiKey() const;
+    void saveTtsModel(const QString &model);
+    QString loadTtsModel() const;
     void saveTtsVoice(const QString &voice);
     QString loadTtsVoice() const;
     void saveTtsAutoPlay(bool enabled);

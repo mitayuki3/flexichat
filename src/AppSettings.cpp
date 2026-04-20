@@ -84,6 +84,14 @@ QString AppSettings::loadTtsApiKey() const {
     return m_settings.value(KEY_TTS_API_KEY, "").toString();
 }
 
+void AppSettings::saveTtsModel(const QString &model) {
+    m_settings.setValue("Tts/Model", model);
+}
+
+QString AppSettings::loadTtsModel() const{
+    return m_settings.value("Tts/Model", "tts-1").toString();
+}
+
 void AppSettings::saveTtsVoice(const QString &voice) {
     m_settings.setValue(KEY_TTS_VOICE, voice);
 }
