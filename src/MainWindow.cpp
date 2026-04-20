@@ -64,6 +64,7 @@ void MainWindow::connectSignals() {
     connect(ui->chatDisplay, &QListView::activated, this,
             [this](const QModelIndex &index) {
                 this->m_pendingTtsText = this->m_model->data(index).toString();
+        this->syncTtsButtons();
     });
 }
 

@@ -53,6 +53,14 @@ int main(int argc, char *argv[]) {
     QObject::connect(client.data(), &LMStudioClient::requestCompleted,
                      &mainWindow, &MainWindow::onApiRequestFinished);
 
+    if (settings.loadTtsAutoPlay()) {
+        QObject::connect(client.data(), &LMStudioClient::replyReceived,
+                         ttsClient.data(),
+                         [rawTtsClient = ttsClient.data()](const QString &reply) {
+                             rawTtsClient->synthesize(reply);
+        });
+    }
+
     // MainWindow → LMStudioClient のシグナル仲介
     auto *rawClient = client.data();
     QObject::connect(&mainWindow, &MainWindow::requestSend, client.data(),
