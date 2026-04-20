@@ -34,9 +34,8 @@ int main(int argc, char *argv[]) {
     // 初期プロファイルをクライアントに設定
     client->setProfile(profileManager->getActiveProfile());
 
-    // メインウィンドウの作成と表示
+    // メインウィンドウ
     MainWindow mainWindow(profileManager.data());
-    mainWindow.show();
 
     // ProfileManager のシグナルを MainWindow に接続
     QObject::connect(profileManager.data(), &ProfileManager::activeProfileChanged,
@@ -101,5 +100,6 @@ int main(int argc, char *argv[]) {
             dialog.exec();
         });
 
+    mainWindow.show();
     return app.exec();
 }
