@@ -22,7 +22,7 @@ OpenAITTSClient::OpenAITTSClient(QObject *parent)
     m_model("tts-1"),
     m_format("mp3"),
     m_isPlaying(false) {
-    m_networkManager->setTransferTimeout(30000); // 30 秒タイムアウト
+    m_networkManager->setTransferTimeout(120000); // 120 秒タイムアウト
 
     connect(m_networkManager, &QNetworkAccessManager::finished, this,
             &OpenAITTSClient::onSynthesizeFinished);
@@ -145,12 +145,6 @@ void OpenAITTSClient::sendSynthesizeRequest(const QString &text) {
     stop();
 
     auto url = QUrl(m_baseUrl + DEFAULT_TTS_ENDPOINT);
-    QUrlQuery query;
-    query.addQueryItem("model", m_model);
-    query.addQueryItem("voice", m_voice);
-    query.addQueryItem("response_format", m_format);
-    url.setQuery(query);
-
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader,
                       "application/json");
@@ -165,6 +159,15 @@ void OpenAITTSClient::sendSynthesizeRequest(const QString &text) {
     // リクエストボディ
     QJsonObject body;
     body["input"] = text;
+    if (!m_model.isEmpty()) {
+        body["model"] = m_model;
+    }
+    if (!m_voice.isEmpty()) {
+        body["voice"] = m_voice;
+    }
+    if (!m_format.isEmpty()) {
+        body["response_format"] = m_format;
+    }
     QJsonDocument doc(body);
     QByteArray postData = doc.toJson(QJsonDocument::Compact);
 
@@ -188,6 +191,7 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
         }
 
         emit errorOccurred("TTS エラー：" + errorMsg);
+        emit errorOccurred("body: " + QString::fromUtf8(reply->readAll()));
         reply->deleteLater();
         return;
     }
