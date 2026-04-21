@@ -13,15 +13,17 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("FlexiChat");
     app.setApplicationVersion("1.0.0");
 
+    QObject *workerRoot = new QObject(&app);
+
     // 設定の読み込み
     AppSettings settings;
 
     // LM Studio クライアントの作成
-    QScopedPointer<LMStudioClient> client(new LMStudioClient());
+    LMStudioClient *client = new LMStudioClient(workerRoot);
     client->setBaseUrl(settings.loadApiBaseUrl());
 
     // TTS クライアントの作成
-    QScopedPointer<OpenAITTSClient> ttsClient(new OpenAITTSClient());
+    OpenAITTSClient *ttsClient = new OpenAITTSClient(workerRoot);
     ttsClient->setBaseUrl(settings.loadTtsBaseUrl());
     ttsClient->setModel(settings.loadTtsModel());
     ttsClient->setVoice(settings.loadTtsVoice());
@@ -45,66 +47,64 @@ int main(int argc, char *argv[]) {
                      &mainWindow, &MainWindow::onProfileListChanged);
 
     // LMStudioClient のシグナルを MainWindow に接続
-    QObject::connect(client.data(), &LMStudioClient::replyReceived, &mainWindow,
+    QObject::connect(client, &LMStudioClient::replyReceived, &mainWindow,
                      &MainWindow::onReplyReceived);
-    QObject::connect(client.data(), &LMStudioClient::errorOccurred, &mainWindow,
+    QObject::connect(client, &LMStudioClient::errorOccurred, &mainWindow,
                      &MainWindow::onErrorOccurred);
-    QObject::connect(client.data(), &LMStudioClient::requestStarted, &mainWindow,
+    QObject::connect(client, &LMStudioClient::requestStarted, &mainWindow,
                      &MainWindow::onApiRequestStarted);
-    QObject::connect(client.data(), &LMStudioClient::requestCompleted,
-                     &mainWindow, &MainWindow::onApiRequestFinished);
+    QObject::connect(client, &LMStudioClient::requestCompleted, &mainWindow,
+                     &MainWindow::onApiRequestFinished);
 
-    if (settings.loadTtsAutoPlay()) {
-        QObject::connect(client.data(), &LMStudioClient::replyReceived,
-                         ttsClient.data(),
-                         [rawTtsClient = ttsClient.data()](const QString &reply) {
-                             rawTtsClient->synthesize(reply);
-        });
-    }
+    QObject::connect(client, &LMStudioClient::replyReceived, ttsClient,
+                     [ttsClient, &settings](const QString &reply) {
+        if (settings.loadTtsAutoPlay()) {
+            ttsClient->synthesize(reply);
+        }
+    });
 
     // MainWindow → LMStudioClient のシグナル仲介
-    auto *rawClient = client.data();
-    QObject::connect(&mainWindow, &MainWindow::requestSend, client.data(),
+    QObject::connect(&mainWindow, &MainWindow::requestSend, client,
                      &LMStudioClient::sendRequest);
     QObject::connect(
         &mainWindow, &MainWindow::profileChangeRequested, &mainWindow,
-        [rawClient, profileManager = profileManager.data()](const QString &id) {
+        [client, profileManager = profileManager.data()](const QString &id) {
             auto *profile = profileManager->getProfileById(id);
             if (profile) {
-                rawClient->setProfile(*profile);
+                client->setProfile(*profile);
             }
         });
 
     // TTS シグナルの接続（MainWindow → OpenAITTSClient）
-    QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, ttsClient.data(),
-                     [rawTtsClient = ttsClient.data(), &mainWindow]() {
-                         QString text = mainWindow.getPendingTtsText();
-                         if (!text.isEmpty()) {
-                             rawTtsClient->synthesize(text);
-                         }
-                     });
-    QObject::connect(&mainWindow, &MainWindow::stopTtsRequested, ttsClient.data(),
+    QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, ttsClient,
+                     [ttsClient, &mainWindow]() {
+        QString text = mainWindow.getPendingTtsText();
+        if (!text.isEmpty()) {
+            ttsClient->synthesize(text);
+        }
+    });
+    QObject::connect(&mainWindow, &MainWindow::stopTtsRequested, ttsClient,
                      &OpenAITTSClient::stop);
 
     // TTS → MainWindow のシグナル接続（再生状態の更新）
-    QObject::connect(ttsClient.data(), &OpenAITTSClient::playbackStarted, &mainWindow,
+    QObject::connect(ttsClient, &OpenAITTSClient::playbackStarted, &mainWindow,
                      &MainWindow::syncTtsButtons);
-    QObject::connect(ttsClient.data(), &OpenAITTSClient::playbackFinished, &mainWindow,
+    QObject::connect(ttsClient, &OpenAITTSClient::playbackFinished, &mainWindow,
                      &MainWindow::syncTtsButtons);
-    QObject::connect(ttsClient.data(), &OpenAITTSClient::errorOccurred, &mainWindow,
+    QObject::connect(ttsClient, &OpenAITTSClient::errorOccurred, &mainWindow,
                      &MainWindow::onErrorOccurred);
 
     // 設定ダイアログの表示（シグナル経由で開く）
     QObject::connect(
         &mainWindow, &MainWindow::openSettingsRequested, &mainWindow,
-        [rawClient, profileManager = profileManager.data()]() {
+        [client, profileManager = profileManager.data()]() {
             SettingsDialog dialog(profileManager);
 
             // 接続テストのシグナル仲介
             QObject::connect(&dialog, &SettingsDialog::connectionTestRequested,
-                             rawClient, &LMStudioClient::testConnection);
-            QObject::connect(rawClient, &LMStudioClient::connectionTestResult,
-                             &dialog, &SettingsDialog::onConnectionTestResult);
+                             client, &LMStudioClient::testConnection);
+            QObject::connect(client, &LMStudioClient::connectionTestResult, &dialog,
+                             &SettingsDialog::onConnectionTestResult);
 
             dialog.exec();
         });
