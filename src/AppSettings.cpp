@@ -8,6 +8,7 @@ const QString AppSettings::KEY_ACTIVE_PROFILE = "General/ActiveProfileId";
 const QString AppSettings::KEY_API_BASE_URL = "General/ApiBaseUrl";
 const QString AppSettings::KEY_TTS_API_KEY = "Tts/ApiKey";
 const QString AppSettings::KEY_TTS_VOICE = "Tts/Voice";
+const QString AppSettings::KEY_TTS_INSTRUCTIONS = "Tts/Instructions";
 const QString AppSettings::KEY_TTS_AUTO_PLAY = "Tts/AutoPlay";
 const QString AppSettings::KEY_TTS_BASE_URL = "Tts/BaseUrl";
 
@@ -88,7 +89,7 @@ void AppSettings::saveTtsModel(const QString &model) {
     m_settings.setValue("Tts/Model", model);
 }
 
-QString AppSettings::loadTtsModel() const{
+QString AppSettings::loadTtsModel() const {
     return m_settings.value("Tts/Model", "tts-1").toString();
 }
 
@@ -98,6 +99,14 @@ void AppSettings::saveTtsVoice(const QString &voice) {
 
 QString AppSettings::loadTtsVoice() const {
     return m_settings.value(KEY_TTS_VOICE, "alloy").toString();
+}
+
+void AppSettings::saveTtsInstructions(const QString &instructions) {
+    m_settings.setValue(KEY_TTS_INSTRUCTIONS, instructions);
+}
+
+QString AppSettings::loadTtsInstructions() const {
+    return m_settings.value(KEY_TTS_INSTRUCTIONS, "").toString();
 }
 
 void AppSettings::saveTtsAutoPlay(bool enabled) {

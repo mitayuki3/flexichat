@@ -64,6 +64,8 @@ public:
      */
     void setModel(const QString &model);
 
+    void setInstructions(const QString &);
+
     /**
      * @brief 音声フォーマット設定（mp3, wav, opus, flac）
      * @param format フォーマット名
@@ -106,6 +108,7 @@ private:
     QString m_apiKey;
     QString m_voice;
     QString m_model;
+    QString m_instructions;
     QString m_format;
     bool m_isPlaying;
 

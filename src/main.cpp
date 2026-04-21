@@ -23,8 +23,9 @@ int main(int argc, char *argv[]) {
     // TTS クライアントの作成
     QScopedPointer<OpenAITTSClient> ttsClient(new OpenAITTSClient());
     ttsClient->setBaseUrl(settings.loadTtsBaseUrl());
-    ttsClient->setVoice(settings.loadTtsVoice());
     ttsClient->setModel(settings.loadTtsModel());
+    ttsClient->setVoice(settings.loadTtsVoice());
+    ttsClient->setInstructions(settings.loadTtsInstructions());
     ttsClient->setApiKey(settings.loadTtsApiKey());
 
     // プロファイルマネージャーの作成

@@ -112,6 +112,10 @@ void OpenAITTSClient::setVoice(const QString &voice) { m_voice = voice; }
  */
 void OpenAITTSClient::setModel(const QString &model) { m_model = model; }
 
+void OpenAITTSClient::setInstructions(const QString &instructions) {
+    m_instructions = instructions;
+}
+
 /**
  * @brief 音声フォーマット設定
  */
@@ -164,6 +168,9 @@ void OpenAITTSClient::sendSynthesizeRequest(const QString &text) {
     }
     if (!m_voice.isEmpty()) {
         body["voice"] = m_voice;
+    }
+    if (!m_instructions.isEmpty()) {
+        body["instructions"] = m_instructions;
     }
     if (!m_format.isEmpty()) {
         body["response_format"] = m_format;
