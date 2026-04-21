@@ -38,14 +38,20 @@ MainWindow::~MainWindow() { delete ui; }
  * @brief シグナル接続の設定
  */
 void MainWindow::connectSignals() {
+    // 自動再生チェックボックス
+    connect(ui->autoplayCheckBox, &QCheckBox::checkStateChanged, this,
+            [this](Qt::CheckState state) {
+                emit autoplayChanged(state == Qt::Checked);
+    });
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
     connect(ui->chatDisplay, &QListView::clicked, this,
             &MainWindow::onChatDisplayClicked);
 
-    connect(ui->actionAbout, &QAction::triggered, this, [this]() {
+    connect(
+        ui->actionAbout, &QAction::triggered, this, [this]() {
         QMessageBox::about(this, "バージョン情報",
                            "AI チャットアプリ FlexiChat v1.0.0\nImplemented with Qt");
-    });
+        });
 
     connect(ui->actionSettings, &QAction::triggered, this,
             &MainWindow::openSettingsRequested);

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>480</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -53,14 +53,24 @@
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="inputLayout">
-      <property name="spacing">
-       <number>1</number>
-      </property>
+     <layout class="QHBoxLayout" name="speechLayout">
       <item>
-       <widget class="QLineEdit" name="inputField">
-        <property name="placeholderText">
-         <string>メッセージを入力...</string>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="autoplayCheckBox">
+        <property name="text">
+         <string>自動再生</string>
         </property>
        </widget>
       </item>
@@ -84,6 +94,20 @@
         </property>
        </widget>
       </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="inputLayout">
+      <property name="spacing">
+       <number>1</number>
+      </property>
+      <item>
+       <widget class="QLineEdit" name="inputField">
+        <property name="placeholderText">
+         <string>メッセージを入力...</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QPushButton" name="sendButton">
         <property name="text">
@@ -100,7 +124,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>480</width>
      <height>18</height>
     </rect>
    </property>

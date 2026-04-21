@@ -21,7 +21,8 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    explicit MainWindow(ProfileManager *profileManager, QWidget *parent = nullptr);
+    explicit MainWindow(ProfileManager *profileManager,
+                        QWidget *parent = nullptr);
     ~MainWindow() override;
 
 public slots:
@@ -40,6 +41,7 @@ signals:
     void openSettingsRequested();
     void synthesizeRequested(const QString &text);
     void stopTtsRequested();
+    void autoplayChanged(bool checked);
 
 private slots:
     void onSendClicked();

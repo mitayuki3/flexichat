@@ -58,10 +58,15 @@ int main(int argc, char *argv[]) {
 
     QObject::connect(client, &LMStudioClient::replyReceived, ttsClient,
                      [ttsClient, &settings](const QString &reply) {
+        // 自動再生する
         if (settings.loadTtsAutoPlay()) {
             ttsClient->synthesize(reply);
         }
     });
+
+    // MainWindow のチェックボックス状態変化を保存
+    QObject::connect(&mainWindow, &MainWindow::autoplayChanged, &settings,
+                     &AppSettings::saveTtsAutoPlay);
 
     // MainWindow → LMStudioClient のシグナル仲介
     QObject::connect(&mainWindow, &MainWindow::requestSend, client,
