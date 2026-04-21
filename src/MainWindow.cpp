@@ -14,14 +14,13 @@
 MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
     m_profileManager(profileManager), m_model(new QStringListModel(this)),
-    m_profileCombo(nullptr), m_lastAssistantMessage(""), m_pendingTtsText("") {
+    m_lastAssistantMessage(""), m_pendingTtsText("") {
     ui->setupUi(this);
 
     // モデルのセットアップ
     ui->chatDisplay->setModel(m_model);
 
     setupUI();
-    setupToolbar();
     connectSignals();
     populateProfileCombo();
 
@@ -72,52 +71,39 @@ void MainWindow::connectSignals() {
                 this->m_pendingTtsText = this->m_model->data(index).toString();
         this->syncTtsButtons();
     });
-}
 
-/**
- * @brief ツールバーのセットアップ
- */
-void MainWindow::setupToolbar() {
-    auto *toolbar = ui->profileToolBar;
-
-    // プロファイル切り替えコンボボックス
-    auto *label = new QLabel("プロファイル: ");
-    toolbar->addWidget(label);
-
-    m_profileCombo = new QComboBox();
-    m_profileCombo->setMinimumWidth(200);
-    toolbar->addWidget(m_profileCombo);
-
-    connect(m_profileCombo, QOverload<int>::of(&QComboBox::activated), this,
+    connect(ui->profileCombo, QOverload<int>::of(&QComboBox::activated), this,
             &MainWindow::onProfileComboActivated);
+
 }
 
 /**
  * @brief プロファイルコンボボックスの更新
  */
 void MainWindow::populateProfileCombo() {
-    QString currentId = m_profileCombo->currentData().toString();
-    m_profileCombo->clear();
+    QComboBox *profileCombo = ui->profileCombo;
+    QString currentId = profileCombo->currentData().toString();
+    profileCombo->clear();
 
     auto profiles = m_profileManager->getAllProfiles();
     int activeIdx = 0;
 
     for (int i = 0; i < profiles.size(); ++i) {
         const auto &p = profiles[i];
-        m_profileCombo->addItem(p.displayName(), p.id);
+        profileCombo->addItem(p.displayName(), p.id);
         if (p.id == m_profileManager->getActiveProfileId()) {
             activeIdx = i;
         }
     }
 
-    m_profileCombo->setCurrentIndex(activeIdx);
+    profileCombo->setCurrentIndex(activeIdx);
 }
 
 /**
  * @brief プロファイルコンボボックスの選択変更
  */
 void MainWindow::onProfileComboActivated(int index) {
-    QString id = m_profileCombo->itemData(index).toString();
+    QString id = ui->profileCombo->itemData(index).toString();
     if (id.isEmpty() || id == m_profileManager->getActiveProfileId()) {
         return;
     }

@@ -54,12 +54,10 @@ private:
     Ui::MainWindow *ui;
     ProfileManager *m_profileManager;
     QStringListModel *m_model;
-    QComboBox *m_profileCombo;
     QString m_lastAssistantMessage;
     QString m_pendingTtsText;
 
     void setupUI();
-    void setupToolbar();
     void connectSignals();
     void appendMessage(const QString &role, const QString &message);
     void populateProfileCombo();
