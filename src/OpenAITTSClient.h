@@ -22,54 +22,15 @@ public:
     explicit OpenAITTSClient(QObject *parent = nullptr);
     ~OpenAITTSClient() override;
 
-    /**
-     * @brief テキストを音声に変換して再生
-     * @param text 音声化するテキスト
-     * @param format 音声フォーマット（mp3 など）
-     */
     void synthesize(const QString &text, const QString &format = "mp3");
-
-    /**
-     * @brief 再生を停止
-     */
+    void playLastResponse();
     void stop();
-
-    /**
-     * @brief 再生中でないか
-     */
     bool isPlaying() const;
-
-    /**
-     * @brief ベース URL の設定
-     * @param url 例：http://localhost:8880
-     */
     void setBaseUrl(const QString &url);
-
-    /**
-     * @brief API キーの設定
-     * @param key API キー
-     */
     void setApiKey(const QString &key);
-
-    /**
-     * @brief 音声の種類設定
-     * 例：alloy, echo, fable, onyx, nova, shimmer
-     * @param voice 音声の種類
-     */
     void setVoice(const QString &voice);
-
-    /**
-     * @brief モデル設定
-     * @param model 例：tts-1
-     */
     void setModel(const QString &model);
-
     void setInstructions(const QString &);
-
-    /**
-     * @brief 音声フォーマット設定（mp3, wav, opus, flac）
-     * @param format フォーマット名
-     */
     void setFormat(const QString &format);
 
 public slots:
@@ -77,25 +38,22 @@ public slots:
 
 signals:
     /**
-     * @brief 音声再生開始
-     */
+   * @brief 音声再生開始
+   */
     void playbackStarted();
 
     /**
-     * @brief 音声再生完了
-     */
+   * @brief 音声再生完了
+   */
     void playbackFinished();
 
     /**
-     * @brief エラー発生
-     * @param error エラーメッセージ
-     */
+   * @brief エラー発生
+   * @param error エラーメッセージ
+   */
     void errorOccurred(const QString &error);
 
 private slots:
-    /**
-     * @brief TTS レスポンス受信時
-     */
     void onSynthesizeFinished(QNetworkReply *reply);
 
 private:
