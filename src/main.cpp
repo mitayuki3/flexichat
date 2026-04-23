@@ -90,6 +90,8 @@ int main(int argc, char *argv[]) {
     });
     QObject::connect(&mainWindow, &MainWindow::stopTtsRequested, ttsClient,
                      &OpenAITTSClient::stop);
+    QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, ttsClient,
+                     &OpenAITTSClient::playLastResponse);
 
     // TTS → MainWindow のシグナル接続（再生状態の更新）
     QObject::connect(ttsClient, &OpenAITTSClient::playbackStarted, &mainWindow,

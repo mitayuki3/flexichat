@@ -46,11 +46,11 @@ void MainWindow::connectSignals() {
     connect(ui->chatDisplay, &QListView::clicked, this,
             &MainWindow::onChatDisplayClicked);
 
-    connect(
-        ui->actionAbout, &QAction::triggered, this, [this]() {
-        QMessageBox::about(this, "バージョン情報",
-                           "AI チャットアプリ FlexiChat v1.0.0\nImplemented with Qt");
-        });
+    connect(ui->actionAbout, &QAction::triggered, this, [this]() {
+        QMessageBox::about(
+            this, "バージョン情報",
+            "AI チャットアプリ FlexiChat v1.0.0\nImplemented with Qt");
+    });
 
     connect(ui->actionSettings, &QAction::triggered, this,
             &MainWindow::openSettingsRequested);
@@ -75,6 +75,11 @@ void MainWindow::connectSignals() {
     connect(ui->profileCombo, QOverload<int>::of(&QComboBox::activated), this,
             &MainWindow::onProfileComboActivated);
 
+    // TTS タブ
+    connect(ui->ttsGenerateButton, &QPushButton::clicked, this,
+            &MainWindow::generateTtsSpeech);
+    connect(ui->ttsPlayButton, &QPushButton::clicked, this,
+            &MainWindow::ttsPlayRequested);
 }
 
 /**
@@ -191,6 +196,18 @@ void MainWindow::onApiRequestFinished() {
  */
 void MainWindow::setupUI() {
     ui->statusbar->showMessage("準備完了");
+
+    // TTS タブの初期化
+    // 保存されたモデルとボイスを選択状態に
+    QString savedModel = m_profileManager->getTtsModel();
+    for (int i = 0; i < ui->ttsModelListWidget->count(); ++i) {
+        if (ui->ttsModelListWidget->item(i)->text() == savedModel) {
+            ui->ttsModelListWidget->setCurrentRow(i);
+            break;
+        }
+    }
+    QString savedVoice = m_profileManager->getTtsVoice();
+    ui->ttsVoiceCombo->setCurrentText(savedVoice);
 }
 
 /**
@@ -220,9 +237,10 @@ void MainWindow::appendMessage(const QString &role, const QString &message) {
  * 選択中のメッセージを TTS で再生（シグナル経由）
  */
 void MainWindow::onPlayTtsClicked() {
-    QModelIndexList selected = ui->chatDisplay->selectionModel()->selectedIndexes();
+    QModelIndexList selected =
+        ui->chatDisplay->selectionModel()->selectedIndexes();
     if (selected.isEmpty()) {
-        QMessageBox::information(this, "選択なし", "チャット履歴から再生したい発言を選択してください。");
+        onErrorOccurred("チャット履歴から再生したい発言を選択してください。");
         return;
     }
 
@@ -233,7 +251,8 @@ void MainWindow::onPlayTtsClicked() {
 
     // AI の発言のみ再生可能
     if (text.startsWith("You:")) {
-        QMessageBox::information(this, "再生不可", "You の発言は再生できません。AI の発言を選択してください。");
+        onErrorOccurred(
+            "You の発言は再生できません。AI の発言を選択してください。");
         return;
     }
 
@@ -265,6 +284,18 @@ void MainWindow::onChatDisplayClicked(const QModelIndex &index) {
 }
 
 /**
+ * @brief TTS タブの「生成」ボタンクリック時
+ */
+void MainWindow::generateTtsSpeech() {
+    m_pendingTtsText = ui->ttsTextEdit->toPlainText().trimmed();
+    if (m_pendingTtsText.isEmpty()) {
+        onErrorOccurred("TTS 入力が空です。テキストを入力してください");
+        return;
+    }
+    emit synthesizeRequested(m_pendingTtsText);
+}
+
+/**
  * @brief TTS ボタンの同期
  * 再生中かどうかでボタン状態を切り替え（シグナル経由）
  */
@@ -278,6 +309,4 @@ void MainWindow::syncTtsButtons() {
 /**
  * @brief pendingTtsText を返す
  */
-QString MainWindow::getPendingTtsText() const {
-    return m_pendingTtsText;
-}
+QString MainWindow::getPendingTtsText() const { return m_pendingTtsText; }
