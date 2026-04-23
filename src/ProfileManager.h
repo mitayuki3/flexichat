@@ -25,6 +25,11 @@ public:
     void loadProfiles();
     void saveAllProfiles();
 
+    QString getTtsModel() const;
+    QString getTtsVoice() const;
+    void saveTtsModel(const QString &model);
+    void saveTtsVoice(const QString &voice);
+
     static QList<SystemPromptProfile> builtInDefaults();
 
 signals:

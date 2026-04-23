@@ -120,6 +120,22 @@ void ProfileManager::loadProfiles() {
 
 void ProfileManager::saveAllProfiles() { m_settings->saveProfiles(m_profiles); }
 
+QString ProfileManager::getTtsModel() const {
+    return m_settings->loadTtsModel();
+}
+
+QString ProfileManager::getTtsVoice() const {
+    return m_settings->loadTtsVoice();
+}
+
+void ProfileManager::saveTtsModel(const QString &model) {
+    m_settings->saveTtsModel(model);
+}
+
+void ProfileManager::saveTtsVoice(const QString &voice) {
+    m_settings->saveTtsVoice(voice);
+}
+
 QList<SystemPromptProfile> ProfileManager::builtInDefaults() {
     return {SystemPromptProfile::createDefault("general", "一般", "💬"),
             SystemPromptProfile::createDefault(
