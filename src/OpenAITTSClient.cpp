@@ -1,4 +1,5 @@
 #include "OpenAITTSClient.h"
+#include <QDebug>
 #include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -225,7 +226,7 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
         }
 
         emit errorOccurred("TTS エラー：" + errorMsg);
-        emit errorOccurred("body: " + QString::fromUtf8(reply->readAll()));
+        qDebug() << "TTS response body:" << QString::fromUtf8(reply->readAll());
         reply->deleteLater();
         return;
     }

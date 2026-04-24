@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(ttsClient, &OpenAITTSClient::playbackFinished, &mainWindow,
                      &MainWindow::syncTtsButtons);
     QObject::connect(ttsClient, &OpenAITTSClient::errorOccurred, &mainWindow,
-                     &MainWindow::onErrorOccurred);
+                     &MainWindow::showStatusMessage);
     QObject::connect(ttsClient, &OpenAITTSClient::statusChanged, &mainWindow,
                      &MainWindow::showStatusMessage);
 
