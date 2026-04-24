@@ -63,7 +63,7 @@ void OpenAITTSClient::synthesize(const QString &text, const QString &format) {
 }
 
 void OpenAITTSClient::playLastResponse() {
-    if (!m_tempFile->exists()) {
+    if (!m_tempFile || !m_tempFile->exists()) {
         // まだ生成していない
         return;
     }
