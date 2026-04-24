@@ -27,6 +27,7 @@ public:
 
     QString getTtsModel() const;
     QString getTtsVoice() const;
+    bool getTtsAutoPlay() const;
     void saveTtsModel(const QString &model);
     void saveTtsVoice(const QString &voice);
 

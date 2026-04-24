@@ -128,6 +128,10 @@ QString ProfileManager::getTtsVoice() const {
     return m_settings->loadTtsVoice();
 }
 
+bool ProfileManager::getTtsAutoPlay() const {
+    return m_settings->loadTtsAutoPlay();
+}
+
 void ProfileManager::saveTtsModel(const QString &model) {
     m_settings->saveTtsModel(model);
 }

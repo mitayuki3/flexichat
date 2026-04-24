@@ -21,8 +21,8 @@ MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     ui->chatDisplay->setModel(m_model);
 
     setupUI();
-    connectSignals();
     populateProfileCombo();
+    connectSignals();
 
     // 初期プロファイルをクライアントに設定（シグナル経由）
     emit profileChangeRequested(m_profileManager->getActiveProfileId());
@@ -208,6 +208,9 @@ void MainWindow::setupUI() {
     }
     QString savedVoice = m_profileManager->getTtsVoice();
     ui->ttsVoiceCombo->setCurrentText(savedVoice);
+
+    // 保存された自動再生設定をチェックボックスに反映
+    ui->autoplayCheckBox->setChecked(m_profileManager->getTtsAutoPlay());
 }
 
 /**
