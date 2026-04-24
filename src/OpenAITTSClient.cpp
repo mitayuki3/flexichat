@@ -227,7 +227,7 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
     m_currentReply = nullptr;
 
     // 一時ファイルを作成
-    m_tempFile = std::make_unique<QTemporaryFile>();
+    m_tempFile = std::make_unique<QTemporaryFile>(QDir::tempPath() + "/flexichat_XXXXXX." + m_format);
     if (!m_tempFile->open()) {
         m_isPlaying = false;
         emit errorOccurred("一時ファイルを作成できません");
