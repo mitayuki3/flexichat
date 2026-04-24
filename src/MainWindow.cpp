@@ -8,21 +8,21 @@
 
 /**
  * @brief コンストラクタ
- * UIのセットアップを行う
+ * UI のセットアップを行う
+ * @param profileManager プロファイルマネージャー
  */
 MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
-      m_profileManager(profileManager), m_model(new QStringListModel(this)),
-      m_profileCombo(nullptr) {
+    m_profileManager(profileManager), m_model(new QStringListModel(this)),
+    m_lastAssistantMessage(""), m_pendingTtsText("") {
     ui->setupUi(this);
 
     // モデルのセットアップ
     ui->chatDisplay->setModel(m_model);
 
     setupUI();
-    setupToolbar();
-    connectSignals();
     populateProfileCombo();
+    connectSignals();
 
     // 初期プロファイルをクライアントに設定（シグナル経由）
     emit profileChangeRequested(m_profileManager->getActiveProfileId());
@@ -37,11 +37,19 @@ MainWindow::~MainWindow() { delete ui; }
  * @brief シグナル接続の設定
  */
 void MainWindow::connectSignals() {
+    // 自動再生チェックボックス
+    connect(ui->autoplayCheckBox, &QCheckBox::checkStateChanged, this,
+            [this](Qt::CheckState state) {
+                emit autoplayChanged(state == Qt::Checked);
+    });
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
+    connect(ui->chatDisplay, &QListView::clicked, this,
+            &MainWindow::onChatDisplayClicked);
 
     connect(ui->actionAbout, &QAction::triggered, this, [this]() {
-        QMessageBox::about(this, "バージョン情報",
-                           "FlexiChat v1.0.0\n\nQt + CMake AIチャットアプリ");
+        QMessageBox::about(
+            this, "バージョン情報",
+            "AI チャットアプリ FlexiChat v1.0.0\nImplemented with Qt");
     });
 
     connect(ui->actionSettings, &QAction::triggered, this,
@@ -51,52 +59,56 @@ void MainWindow::connectSignals() {
             &MainWindow::onSendClicked);
     connect(ui->inputField, &QLineEdit::returnPressed, this,
             &MainWindow::onSendClicked);
-}
 
-/**
- * @brief ツールバーのセットアップ
- */
-void MainWindow::setupToolbar() {
-    auto *toolbar = ui->profileToolBar;
+    // TTS ボタンの接続
+    connect(ui->playTtsButton, &QPushButton::clicked, this,
+            &MainWindow::onPlayTtsClicked);
+    connect(ui->stopTtsButton, &QPushButton::clicked, this,
+            &MainWindow::onStopTtsClicked);
 
-    // プロファイル切り替えコンボボックス
-    auto *label = new QLabel("プロファイル: ");
-    toolbar->addWidget(label);
+    connect(ui->chatDisplay, &QListView::activated, this,
+            [this](const QModelIndex &index) {
+                this->m_pendingTtsText = this->m_model->data(index).toString();
+        this->syncTtsButtons();
+    });
 
-    m_profileCombo = new QComboBox();
-    m_profileCombo->setMinimumWidth(200);
-    toolbar->addWidget(m_profileCombo);
-
-    connect(m_profileCombo, QOverload<int>::of(&QComboBox::activated), this,
+    connect(ui->profileCombo, QOverload<int>::of(&QComboBox::activated), this,
             &MainWindow::onProfileComboActivated);
+
+    // TTS タブ
+    connect(ui->ttsGenerateButton, &QPushButton::clicked, this,
+            &MainWindow::generateTtsSpeech);
+    connect(ui->ttsPlayButton, &QPushButton::clicked, this,
+            &MainWindow::ttsPlayRequested);
 }
 
 /**
  * @brief プロファイルコンボボックスの更新
  */
 void MainWindow::populateProfileCombo() {
-    QString currentId = m_profileCombo->currentData().toString();
-    m_profileCombo->clear();
+    QComboBox *profileCombo = ui->profileCombo;
+    QString currentId = profileCombo->currentData().toString();
+    profileCombo->clear();
 
     auto profiles = m_profileManager->getAllProfiles();
     int activeIdx = 0;
 
     for (int i = 0; i < profiles.size(); ++i) {
         const auto &p = profiles[i];
-        m_profileCombo->addItem(p.displayName(), p.id);
+        profileCombo->addItem(p.displayName(), p.id);
         if (p.id == m_profileManager->getActiveProfileId()) {
             activeIdx = i;
         }
     }
 
-    m_profileCombo->setCurrentIndex(activeIdx);
+    profileCombo->setCurrentIndex(activeIdx);
 }
 
 /**
  * @brief プロファイルコンボボックスの選択変更
  */
 void MainWindow::onProfileComboActivated(int index) {
-    QString id = m_profileCombo->itemData(index).toString();
+    QString id = ui->profileCombo->itemData(index).toString();
     if (id.isEmpty() || id == m_profileManager->getActiveProfileId()) {
         return;
     }
@@ -141,14 +153,17 @@ void MainWindow::onSendClicked() {
 }
 
 /**
- * @brief AIからの応答を受信したときの処理
+ * @brief AI からの応答を受信したときの処理
  */
 void MainWindow::onReplyReceived(const QString &reply) {
     appendMessage("assistant", reply);
+    m_lastAssistantMessage = reply;
 
     ui->inputField->setEnabled(true);
     ui->sendButton->setEnabled(true);
     ui->inputField->setFocus();
+
+    syncTtsButtons();
 }
 
 /**
@@ -163,27 +178,44 @@ void MainWindow::onErrorOccurred(const QString &error) {
 }
 
 /**
- * @brief APIリクエスト開始時のステータス更新
+ * @brief API リクエスト開始時のステータス更新
  */
 void MainWindow::onApiRequestStarted() {
     ui->statusbar->showMessage("応答を生成中...");
 }
 
 /**
- * @brief APIリクエスト完了時のステータス更新
+ * @brief API リクエスト完了時のステータス更新
  */
 void MainWindow::onApiRequestFinished() {
     ui->statusbar->showMessage("準備完了", 3000);
 }
 
 /**
- * @brief UIのセットアップ
+ * @brief UI のセットアップ
  */
-void MainWindow::setupUI() { ui->statusbar->showMessage("準備完了"); }
+void MainWindow::setupUI() {
+    ui->statusbar->showMessage("準備完了");
+
+    // TTS タブの初期化
+    // 保存されたモデルとボイスを選択状態に
+    QString savedModel = m_profileManager->getTtsModel();
+    for (int i = 0; i < ui->ttsModelListWidget->count(); ++i) {
+        if (ui->ttsModelListWidget->item(i)->text() == savedModel) {
+            ui->ttsModelListWidget->setCurrentRow(i);
+            break;
+        }
+    }
+    QString savedVoice = m_profileManager->getTtsVoice();
+    ui->ttsVoiceCombo->setCurrentText(savedVoice);
+
+    // 保存された自動再生設定をチェックボックスに反映
+    ui->autoplayCheckBox->setChecked(m_profileManager->getTtsAutoPlay());
+}
 
 /**
  * @brief メッセージをチャット表示に追加
- * @param role 役割（user/assistant/error）
+ * @param role 役割 (user/assistant/error)
  * @param message メッセージ内容
  */
 void MainWindow::appendMessage(const QString &role, const QString &message) {
@@ -201,4 +233,91 @@ void MainWindow::appendMessage(const QString &role, const QString &message) {
     m_model->setData(m_model->index(row), displayMessage);
 
     ui->chatDisplay->scrollToBottom();
+}
+
+/**
+ * @brief 音声再生ボタンクリック時
+ * 選択中のメッセージを TTS で再生（シグナル経由）
+ */
+void MainWindow::onPlayTtsClicked() {
+    QModelIndexList selected =
+        ui->chatDisplay->selectionModel()->selectedIndexes();
+    if (selected.isEmpty()) {
+        onErrorOccurred("チャット履歴から再生したい発言を選択してください。");
+        return;
+    }
+
+    QString text = m_model->data(selected.first()).toString();
+    if (text.isEmpty()) {
+        return;
+    }
+
+    // AI の発言のみ再生可能
+    if (text.startsWith("You:")) {
+        onErrorOccurred(
+            "You の発言は再生できません。AI の発言を選択してください。");
+        return;
+    }
+
+    ui->statusbar->showMessage("TTS 再生中...");
+
+    // テキストを保存
+    m_pendingTtsText = text.startsWith("AI: ") ? text.mid(4) : text;
+
+    // シグナルで TTS クライアントに送信（保存したテキストを使用）
+    emit synthesizeRequested(m_pendingTtsText);
+}
+
+/**
+ * @brief 音声停止ボタンクリック時
+ * 再生中の TTS を停止（シグナル経由）
+ */
+void MainWindow::onStopTtsClicked() {
+    m_pendingTtsText = "";
+    emit stopTtsRequested();
+}
+
+/**
+ * @brief チャットディスプレイクリック時
+ * 選択ボタンの同期
+ */
+void MainWindow::onChatDisplayClicked(const QModelIndex &index) {
+    Q_UNUSED(index);
+    syncTtsButtons();
+}
+
+/**
+ * @brief TTS タブの「生成」ボタンクリック時
+ */
+void MainWindow::generateTtsSpeech() {
+    m_pendingTtsText = ui->ttsTextEdit->toPlainText().trimmed();
+    if (m_pendingTtsText.isEmpty()) {
+        onErrorOccurred("TTS 入力が空です。テキストを入力してください");
+        return;
+    }
+    emit synthesizeRequested(m_pendingTtsText);
+}
+
+/**
+ * @brief TTS ボタンの同期
+ * 再生中かどうかでボタン状態を切り替え（シグナル経由）
+ */
+void MainWindow::syncTtsButtons() {
+    // TTS クライアントのステータスは main.cpp からシグナルで更新
+    // 再生中でなければ再生ボタン有効
+    ui->playTtsButton->setEnabled(m_pendingTtsText.isEmpty() == false);
+    ui->stopTtsButton->setEnabled(false);
+}
+
+/**
+ * @brief pendingTtsText を返す
+ */
+QString MainWindow::getPendingTtsText() const { return m_pendingTtsText; }
+
+/**
+ * @brief ステータスバーを更新
+ * @param status ステータスメッセージ
+ */
+void MainWindow::showStatusMessage(const QString &status) {
+    ui->statusbar->showMessage(status);
 }

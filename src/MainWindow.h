@@ -21,7 +21,8 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    explicit MainWindow(ProfileManager *profileManager, QWidget *parent = nullptr);
+    explicit MainWindow(ProfileManager *profileManager,
+                        QWidget *parent = nullptr);
     ~MainWindow() override;
 
 public slots:
@@ -31,24 +32,35 @@ public slots:
     void onApiRequestFinished();
     void onProfileChanged(const SystemPromptProfile &profile);
     void onProfileListChanged();
+    void syncTtsButtons();
+    void showStatusMessage(const QString &status);
+    QString getPendingTtsText() const;
 
 signals:
     void requestSend(const QString &message);
     void profileChangeRequested(const QString &profileId);
     void openSettingsRequested();
+    void synthesizeRequested(const QString &text);
+    void stopTtsRequested();
+    void autoplayChanged(bool checked);
+    void ttsPlayRequested();
 
 private slots:
     void onSendClicked();
     void onProfileComboActivated(int index);
+    void onPlayTtsClicked();
+    void onStopTtsClicked();
+    void onChatDisplayClicked(const QModelIndex &index);
+    void generateTtsSpeech();
 
 private:
     Ui::MainWindow *ui;
     ProfileManager *m_profileManager;
     QStringListModel *m_model;
-    QComboBox *m_profileCombo;
+    QString m_lastAssistantMessage;
+    QString m_pendingTtsText;
 
     void setupUI();
-    void setupToolbar();
     void connectSignals();
     void appendMessage(const QString &role, const QString &message);
     void populateProfileCombo();
