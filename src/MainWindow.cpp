@@ -259,7 +259,7 @@ void MainWindow::onPlayTtsClicked() {
     ui->statusbar->showMessage("TTS 再生中...");
 
     // テキストを保存
-    m_pendingTtsText = text.replace("AI: ", "");
+    m_pendingTtsText = text.startsWith("AI: ") ? text.mid(4) : text;
 
     // シグナルで TTS クライアントに送信（保存したテキストを使用）
     emit synthesizeRequested(m_pendingTtsText);
