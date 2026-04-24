@@ -310,3 +310,11 @@ void MainWindow::syncTtsButtons() {
  * @brief pendingTtsText を返す
  */
 QString MainWindow::getPendingTtsText() const { return m_pendingTtsText; }
+
+/**
+ * @brief ステータスバーを更新
+ * @param status ステータスメッセージ
+ */
+void MainWindow::showStatusMessage(const QString &status) {
+    ui->statusbar->showMessage(status);
+}

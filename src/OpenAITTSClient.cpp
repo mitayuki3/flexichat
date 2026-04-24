@@ -189,8 +189,8 @@ void OpenAITTSClient::sendSynthesizeRequest(const QString &text) {
     QJsonDocument doc(body);
     QByteArray postData = doc.toJson(QJsonDocument::Compact);
 
-    // 再生開始メッセージ
-    emit errorOccurred("再生中...");
+    // 生成開始メッセージ
+    emit statusChanged("音声生成中...");
 
     m_currentReply = m_networkManager->post(request, postData);
     m_isPlaying = true;
@@ -200,6 +200,12 @@ void OpenAITTSClient::sendSynthesizeRequest(const QString &text) {
  * @brief TTS レスポンス受信時
  */
 void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
+    // abort() によるキャンセルは無視
+    if (reply->error() == QNetworkReply::OperationCanceledError) {
+        reply->deleteLater();
+        return;
+    }
+
     if (reply->error() != QNetworkReply::NoError) {
         m_isPlaying = false;
         QString errorMsg = reply->errorString();

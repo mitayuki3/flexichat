@@ -33,6 +33,7 @@ public slots:
     void onProfileChanged(const SystemPromptProfile &profile);
     void onProfileListChanged();
     void syncTtsButtons();
+    void showStatusMessage(const QString &status);
     QString getPendingTtsText() const;
 
 signals:

@@ -100,6 +100,8 @@ int main(int argc, char *argv[]) {
                      &MainWindow::syncTtsButtons);
     QObject::connect(ttsClient, &OpenAITTSClient::errorOccurred, &mainWindow,
                      &MainWindow::onErrorOccurred);
+    QObject::connect(ttsClient, &OpenAITTSClient::statusChanged, &mainWindow,
+                     &MainWindow::showStatusMessage);
 
     // 設定ダイアログの表示（シグナル経由で開く）
     QObject::connect(

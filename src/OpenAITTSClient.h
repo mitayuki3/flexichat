@@ -53,6 +53,12 @@ signals:
    */
     void errorOccurred(const QString &error);
 
+    /**
+   * @brief ステータス更新
+   * @param status ステータスメッセージ
+   */
+    void statusChanged(const QString &status);
+
 private slots:
     void onSynthesizeFinished(QNetworkReply *reply);
 
