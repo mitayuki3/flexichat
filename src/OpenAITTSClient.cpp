@@ -202,12 +202,18 @@ void OpenAITTSClient::sendSynthesizeRequest(const QString &text) {
 void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
     // abort() によるキャンセルは無視
     if (reply->error() == QNetworkReply::OperationCanceledError) {
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
         reply->deleteLater();
         return;
     }
 
     if (reply->error() != QNetworkReply::NoError) {
         m_isPlaying = false;
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
         QString errorMsg = reply->errorString();
 
         if (reply->error() == QNetworkReply::TimeoutError) {
@@ -225,13 +231,18 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
 
     if (audioData.isEmpty()) {
         m_isPlaying = false;
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+        }
         emit errorOccurred("音声データが受信できません");
         reply->deleteLater();
         return;
     }
 
+    if (m_currentReply == reply) {
+        m_currentReply = nullptr;
+    }
     reply->deleteLater();
-    m_currentReply = nullptr;
 
     // 一時ファイルを作成
     m_tempFile = std::make_unique<QTemporaryFile>(
