@@ -84,9 +84,13 @@ void OpenAITTSClient::stop() {
         m_player->stop();
     }
     if (m_currentReply) {
-        m_currentReply->abort();
-        m_currentReply->deleteLater();
+        // abort() は finished シグナルを同期的に発火することがあり、
+        // onSynthesizeFinished 内で m_currentReply が nullptr にリセットされる。
+        // そのためローカルに退避してから abort/deleteLater を呼ぶ。
+        QNetworkReply *reply = m_currentReply;
         m_currentReply = nullptr;
+        reply->abort();
+        reply->deleteLater();
     }
     m_isPlaying = false;
 
