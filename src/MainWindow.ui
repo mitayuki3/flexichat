@@ -103,9 +103,6 @@
             <property name="text">
              <string>自動再生</string>
             </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
            </widget>
           </item>
           <item>
