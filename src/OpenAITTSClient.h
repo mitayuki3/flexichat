@@ -14,7 +14,7 @@ public:
     explicit OpenAITTSClient(const QString &outputDir, QObject *parent = nullptr);
     ~OpenAITTSClient() override;
 
-    void synthesize(const QString &text, const QString &format = "mp3");
+    void synthesize(const QString &text);
     void stop();
     void setBaseUrl(const QString &url);
     void setApiKey(const QString &key);
@@ -49,6 +49,5 @@ private:
     QString m_outputDir;
     QString m_lastFilePath;
 
-    void sendSynthesizeRequest(const QString &text);
     QString generateFilePath(const QString &format) const;
 };

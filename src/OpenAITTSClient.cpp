@@ -62,17 +62,51 @@ OpenAITTSClient::~OpenAITTSClient() {
 /**
  * @brief テキストを音声に変換してファイルに保存
  * @param text 音声化するテキスト
- * @param format 音声フォーマット（mp3 など）
  */
-void OpenAITTSClient::synthesize(const QString &text, const QString &format) {
+void OpenAITTSClient::synthesize(const QString &text) {
     if (text.isEmpty()) {
         emit errorOccurred("音声化するテキストが空です");
         return;
     }
 
-    m_format = format.isEmpty() ? "mp3" : format;
+    // 以前のリクエストがあれば停止
+    stop();
 
-    sendSynthesizeRequest(text);
+    auto url = QUrl(m_baseUrl + DEFAULT_TTS_ENDPOINT);
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Accept", "audio/mpeg");
+
+    // API キーがある場合は認証ヘッダー追加
+    if (!m_apiKey.isEmpty()) {
+        request.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
+    }
+
+    // リクエストボディ
+    QJsonObject body;
+    body["input"] = text;
+    if (!m_model.isEmpty()) {
+        body["model"] = m_model;
+    }
+    if (!m_voice.isEmpty()) {
+        body["voice"] = m_voice;
+    }
+    if (!m_instructions.isEmpty()) {
+        body["instructions"] = m_instructions;
+    }
+    if (!m_format.isEmpty()) {
+        body["response_format"] = m_format;
+    }
+    if (m_seed > 0) {
+        body["seed"] = m_seed;
+    }
+    QJsonDocument doc(body);
+    QByteArray postData = doc.toJson(QJsonDocument::Compact);
+
+    // 生成開始メッセージ
+    emit statusChanged("音声生成中...");
+
+    m_currentReply = m_networkManager->post(request, postData);
 }
 
 /**
@@ -164,50 +198,6 @@ QString OpenAITTSClient::generateFilePath(const QString &format) const {
     QString fileName = QString("%1%2.%3").arg(timeStr).arg(seedStr).arg(format);
 
     return fullDateDir + "/" + fileName;
-}
-
-/**
- * @brief TTS リクエスト送信
- */
-void OpenAITTSClient::sendSynthesizeRequest(const QString &text) {
-    // 以前のリクエストがあれば停止
-    stop();
-
-    auto url = QUrl(m_baseUrl + DEFAULT_TTS_ENDPOINT);
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    request.setRawHeader("Accept", "audio/mpeg");
-
-    // API キーがある場合は認証ヘッダー追加
-    if (!m_apiKey.isEmpty()) {
-        request.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
-    }
-
-    // リクエストボディ
-    QJsonObject body;
-    body["input"] = text;
-    if (!m_model.isEmpty()) {
-        body["model"] = m_model;
-    }
-    if (!m_voice.isEmpty()) {
-        body["voice"] = m_voice;
-    }
-    if (!m_instructions.isEmpty()) {
-        body["instructions"] = m_instructions;
-    }
-    if (!m_format.isEmpty()) {
-        body["response_format"] = m_format;
-    }
-    if (m_seed > 0) {
-        body["seed"] = m_seed;
-    }
-    QJsonDocument doc(body);
-    QByteArray postData = doc.toJson(QJsonDocument::Compact);
-
-    // 生成開始メッセージ
-    emit statusChanged("音声生成中...");
-
-    m_currentReply = m_networkManager->post(request, postData);
 }
 
 /**
