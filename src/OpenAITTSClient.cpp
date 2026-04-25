@@ -1,5 +1,4 @@
 #include "OpenAITTSClient.h"
-#include <QCoreApplication>
 #include <QDate>
 #include <QDebug>
 #include <QDir>
@@ -83,6 +82,9 @@ void OpenAITTSClient::synthesize(const QString &text, const QString &format) {
  */
 void OpenAITTSClient::stop() {
     if (m_currentReply) {
+        // abort() は finished シグナルを同期的に発火することがあり、
+        // onSynthesizeFinished 内で m_currentReply が nullptr にリセットされる。
+        // そのためローカルに退避してから abort/deleteLater を呼ぶ。
         QNetworkReply *reply = m_currentReply;
         m_currentReply = nullptr;
         reply->abort();
