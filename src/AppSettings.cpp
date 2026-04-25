@@ -11,6 +11,7 @@ const QString AppSettings::KEY_TTS_VOICE = "Tts/Voice";
 const QString AppSettings::KEY_TTS_INSTRUCTIONS = "Tts/Instructions";
 const QString AppSettings::KEY_TTS_AUTO_PLAY = "Tts/AutoPlay";
 const QString AppSettings::KEY_TTS_BASE_URL = "Tts/BaseUrl";
+const QString AppSettings::KEY_TTS_OUTPUT_DIR = "Tts/OutputDir";
 
 AppSettings::AppSettings(QObject *parent)
     : QObject(parent), m_settings(QSettings::IniFormat, QSettings::UserScope,
@@ -123,4 +124,12 @@ void AppSettings::saveTtsBaseUrl(const QString &url) {
 
 QString AppSettings::loadTtsBaseUrl() const {
     return m_settings.value(KEY_TTS_BASE_URL, "http://localhost:8880").toString();
+}
+
+void AppSettings::saveTtsOutputDir(const QString &dir) {
+    m_settings.setValue(KEY_TTS_OUTPUT_DIR, dir);
+}
+
+QString AppSettings::loadTtsOutputDir() const {
+    return m_settings.value(KEY_TTS_OUTPUT_DIR, "./output").toString();
 }
