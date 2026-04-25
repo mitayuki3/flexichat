@@ -22,7 +22,6 @@ public:
     void setModel(const QString &model);
     void setInstructions(const QString &instructions);
     void setFormat(const QString &format);
-    void setSeed(int seed);
     void setOutputDir(const QString &dir);
 
 public slots:
@@ -45,7 +44,6 @@ private:
     QString m_model;
     QString m_instructions;
     QString m_format;
-    int m_seed;
     QString m_outputDir;
     QString m_lastFilePath;
 

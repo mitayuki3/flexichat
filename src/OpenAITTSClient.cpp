@@ -41,7 +41,7 @@ static const QString DEFAULT_TTS_ENDPOINT = "/v1/audio/speech";
 OpenAITTSClient::OpenAITTSClient(const QString &outputDir, QObject *parent)
     : QObject(parent), m_networkManager(new QNetworkAccessManager(this)),
     m_currentReply(nullptr), m_baseUrl("http://localhost:8880"), m_apiKey(""),
-    m_voice("alloy"), m_model("tts-1"), m_format("mp3"), m_seed(0),
+    m_voice("alloy"), m_model("tts-1"), m_format("mp3"),
     m_outputDir(outputDir) {
     m_networkManager->setTransferTimeout(120000); // 120 秒タイムアウト
 
@@ -96,9 +96,6 @@ void OpenAITTSClient::synthesize(const QString &text) {
     }
     if (!m_format.isEmpty()) {
         body["response_format"] = m_format;
-    }
-    if (m_seed > 0) {
-        body["seed"] = m_seed;
     }
     QJsonDocument doc(body);
     QByteArray postData = doc.toJson(QJsonDocument::Compact);
@@ -160,18 +157,10 @@ void OpenAITTSClient::setInstructions(const QString &instructions) {
 void OpenAITTSClient::setFormat(const QString &format) { m_format = format; }
 
 /**
- * @brief seed値の設定
- * @param seed seed値
- */
-void OpenAITTSClient::setSeed(int seed) { m_seed = seed; }
-
-/**
  * @brief 出力先ディレクトリの設定
  * @param dir 出力先ディレクトリ
  */
-void OpenAITTSClient::setOutputDir(const QString &dir) {
-    m_outputDir = dir;
-}
+void OpenAITTSClient::setOutputDir(const QString &dir) { m_outputDir = dir; }
 
 /**
  * @brief リセット
@@ -192,10 +181,9 @@ QString OpenAITTSClient::generateFilePath(const QString &format) const {
         QDir(m_outputDir).mkpath(dateDir);
     }
 
-    // ファイル名: {時刻}_{seed}.{format}
+    // ファイル名: {時刻}.{format}
     QString timeStr = QTime::currentTime().toString("HHmmss");
-    QString seedStr = (m_seed > 0) ? QString("_%1").arg(m_seed) : "";
-    QString fileName = QString("%1%2.%3").arg(timeStr).arg(seedStr).arg(format);
+    QString fileName = QString("%1.%2").arg(timeStr, format);
 
     return fullDateDir + "/" + fileName;
 }
