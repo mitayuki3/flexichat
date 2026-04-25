@@ -95,7 +95,8 @@ int main(int argc, char *argv[]) {
         audioPlayer->setSource(QUrl::fromLocalFile(filePath));
     };
     // 上記に加えて再生まで行うヘルパー
-    auto playAudioSource = [audioPlayer, setAudioSource](const QString &filePath) {
+    auto playAudioSource = [audioPlayer,
+                            setAudioSource](const QString &filePath) {
         setAudioSource(filePath);
         audioPlayer->play();
     };
@@ -136,8 +137,8 @@ int main(int argc, char *argv[]) {
     QObject::connect(&app, &QCoreApplication::aboutToQuit, workerThread,
                      [workerThread]() {
                          workerThread->quit();
-                         workerThread->wait();
-                     });
+        workerThread->wait();
+    });
     logic->moveToThread(workerThread);
     workerThread->start();
     mainWindow.show();

@@ -322,7 +322,7 @@ void MainWindow::appendTtsOutput(QString const &filePath) {
     ui->ttsListWidget->addItem(filePath);
 }
 
-void MainWindow::onTtsListRowChanged(int row){
+void MainWindow::onTtsListRowChanged(int row) {
     if (QListWidgetItem *item = ui->ttsListWidget->item(row)) {
         emit ttsFileSelected(item->text());
     }
