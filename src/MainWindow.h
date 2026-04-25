@@ -35,23 +35,26 @@ public slots:
     void syncTtsButtons();
     void showStatusMessage(const QString &status);
     QString getPendingTtsText() const;
+    void appendTtsOutput(QString const &filePath);
 
 signals:
     void requestSend(const QString &message);
     void profileChangeRequested(const QString &profileId);
     void openSettingsRequested();
     void synthesizeRequested(const QString &text);
-    void stopTtsRequested();
     void autoplayChanged(bool checked);
     void ttsPlayRequested();
+    void ttsFileSelected(const QString &filePath);
+    void ttsFileActivated(const QString &filePath);
 
 private slots:
     void onSendClicked();
     void onProfileComboActivated(int index);
     void onPlayTtsClicked();
-    void onStopTtsClicked();
     void onChatDisplayClicked(const QModelIndex &index);
     void generateTtsSpeech();
+    void onTtsListRowChanged(int row);
+    void onTtsListActivated(const QModelIndex &index);
 
 private:
     Ui::MainWindow *ui;

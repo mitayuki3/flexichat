@@ -63,8 +63,6 @@ void MainWindow::connectSignals() {
     // TTS ボタンの接続
     connect(ui->playTtsButton, &QPushButton::clicked, this,
             &MainWindow::onPlayTtsClicked);
-    connect(ui->stopTtsButton, &QPushButton::clicked, this,
-            &MainWindow::onStopTtsClicked);
 
     connect(ui->chatDisplay, &QListView::activated, this,
             [this](const QModelIndex &index) {
@@ -80,6 +78,12 @@ void MainWindow::connectSignals() {
             &MainWindow::generateTtsSpeech);
     connect(ui->ttsPlayButton, &QPushButton::clicked, this,
             &MainWindow::ttsPlayRequested);
+
+    // TTS リスト
+    connect(ui->ttsListWidget, &QListWidget::currentRowChanged, this,
+            &MainWindow::onTtsListRowChanged);
+    connect(ui->ttsListWidget, &QListWidget::activated, this,
+            &MainWindow::onTtsListActivated);
 }
 
 /**
@@ -267,15 +271,6 @@ void MainWindow::onPlayTtsClicked() {
 }
 
 /**
- * @brief 音声停止ボタンクリック時
- * 再生中の TTS を停止（シグナル経由）
- */
-void MainWindow::onStopTtsClicked() {
-    m_pendingTtsText = "";
-    emit stopTtsRequested();
-}
-
-/**
  * @brief チャットディスプレイクリック時
  * 選択ボタンの同期
  */
@@ -304,7 +299,6 @@ void MainWindow::syncTtsButtons() {
     // TTS クライアントのステータスは main.cpp からシグナルで更新
     // 再生中でなければ再生ボタン有効
     ui->playTtsButton->setEnabled(m_pendingTtsText.isEmpty() == false);
-    ui->stopTtsButton->setEnabled(false);
 }
 
 /**
@@ -318,4 +312,31 @@ QString MainWindow::getPendingTtsText() const { return m_pendingTtsText; }
  */
 void MainWindow::showStatusMessage(const QString &status) {
     ui->statusbar->showMessage(status);
+}
+
+/**
+ * @brief TTS 生成完了時
+ * @param filePath 生成されたファイルパス
+ */
+void MainWindow::appendTtsOutput(QString const &filePath) {
+    ui->ttsListWidget->addItem(filePath);
+}
+
+void MainWindow::onTtsListRowChanged(int row) {
+    if (QListWidgetItem *item = ui->ttsListWidget->item(row)) {
+        emit ttsFileSelected(item->text());
+    }
+}
+
+/**
+ * @brief TTS リストアクティベート時
+ * @param index アクティベートされたインデックス
+ */
+void MainWindow::onTtsListActivated(const QModelIndex &index) {
+    if (!index.isValid()) {
+        return;
+    }
+    if (QListWidgetItem *item = ui->ttsListWidget->itemFromIndex(index)) {
+        emit ttsFileActivated(item->text());
+    }
 }

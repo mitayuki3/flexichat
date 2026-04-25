@@ -84,18 +84,34 @@ int main(int argc, char *argv[]) {
             }
         });
 
-    // TTS シグナルの接続（MainWindow → OpenAITTSClient）
+    // TTS シグナルの接続（MainWindow → MainLogic）
     QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, logic,
                      &MainLogic::synthesize);
-    QObject::connect(&mainWindow, &MainWindow::stopTtsRequested, audioPlayer,
-                     &QMediaPlayer::stop);
     QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, audioPlayer,
                      &QMediaPlayer::play);
 
-    QObject::connect(logic, &MainLogic::mediaSourceChanged, audioPlayer,
-                     &QMediaPlayer::setSource);
-    QObject::connect(audioPlayer, &QMediaPlayer::sourceChanged, audioPlayer,
-                     &QMediaPlayer::play);
+    // ファイルパスを QMediaPlayer の音声ソースに設定するヘルパー
+    auto setAudioSource = [audioPlayer](const QString &filePath) {
+        audioPlayer->setSource(QUrl::fromLocalFile(filePath));
+    };
+    // 上記に加えて再生まで行うヘルパー
+    auto playAudioSource = [audioPlayer,
+                            setAudioSource](const QString &filePath) {
+        setAudioSource(filePath);
+        audioPlayer->play();
+    };
+
+    // 音声ファイル生成完了通知（リストへの追加 + 自動再生）
+    QObject::connect(logic, &MainLogic::ttsFileCreated, &mainWindow,
+                     &MainWindow::appendTtsOutput);
+    QObject::connect(logic, &MainLogic::ttsFileCreated, audioPlayer,
+                     playAudioSource);
+
+    // 音声ファイルが選択された／アクティベートされた
+    QObject::connect(&mainWindow, &MainWindow::ttsFileSelected, audioPlayer,
+                     setAudioSource);
+    QObject::connect(&mainWindow, &MainWindow::ttsFileActivated, audioPlayer,
+                     playAudioSource);
 
     // オーディオプレイヤー状態同期
     QObject::connect(audioPlayer, &QMediaPlayer::playingChanged, &mainWindow,
@@ -121,8 +137,8 @@ int main(int argc, char *argv[]) {
     QObject::connect(&app, &QCoreApplication::aboutToQuit, workerThread,
                      [workerThread]() {
                          workerThread->quit();
-                         workerThread->wait();
-                     });
+        workerThread->wait();
+    });
     logic->moveToThread(workerThread);
     workerThread->start();
     mainWindow.show();

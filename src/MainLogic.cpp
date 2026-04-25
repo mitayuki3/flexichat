@@ -46,6 +46,5 @@ void MainLogic::onReplyReceived(QString const &reply) {
 }
 
 void MainLogic::onSynthesizeCompleted(const QString &filePath) {
-    QUrl url = QUrl::fromLocalFile(filePath);
-    emit mediaSourceChanged(url);
+    emit ttsFileCreated(filePath);
 }

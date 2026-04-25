@@ -13,7 +13,7 @@ public:
 
 signals:
     void statusOccured(QString const &message);
-    void mediaSourceChanged(const QUrl &source);
+    void ttsFileCreated(const QString &filePath);
 
 public slots:
     void updateSettings(TtsSettingsData const &data);
