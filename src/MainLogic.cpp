@@ -31,6 +31,10 @@ void MainLogic::updateSettings(TtsSettingsData const &data) {
     m_ttsClient->setOutputDir(data.outputDir);
 }
 
+void MainLogic::setVoice(QString const &voice) {
+    m_ttsClient->setVoice(voice);
+}
+
 void MainLogic::synthesize(QString const &text) {
     if (text.isEmpty()) {
         return;

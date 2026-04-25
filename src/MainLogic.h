@@ -17,6 +17,7 @@ signals:
 
 public slots:
     void updateSettings(TtsSettingsData const &data);
+    void setVoice(QString const &voice);
     void synthesize(QString const &text);
     void onReplyReceived(QString const &reply);
     void onSynthesizeCompleted(const QString &filePath);

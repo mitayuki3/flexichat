@@ -43,6 +43,7 @@ signals:
     void openSettingsRequested();
     void synthesizeRequested(const QString &text);
     void autoplayChanged(bool checked);
+    void voiceChanged(const QString &voice);
     void ttsPlayRequested();
     void ttsFileSelected(const QString &filePath);
     void ttsFileActivated(const QString &filePath);

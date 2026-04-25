@@ -72,6 +72,10 @@ int main(int argc, char *argv[]) {
     QObject::connect(&mainWindow, &MainWindow::autoplayChanged, settings,
                      &AppSettings::saveTtsAutoPlay);
 
+    // TTS タブのボイス変更を logic に反映（設定ファイルへは保存しない）
+    QObject::connect(&mainWindow, &MainWindow::voiceChanged, logic,
+                     &MainLogic::setVoice);
+
     // MainWindow → LMStudioClient のシグナル仲介
     QObject::connect(&mainWindow, &MainWindow::requestSend, client,
                      &LMStudioClient::sendRequest);
