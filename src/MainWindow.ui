@@ -201,7 +201,7 @@
         <item>
          <layout class="QVBoxLayout" name="ttsOutputLayout">
           <item>
-           <widget class="QListWidget" name="ttsListWidget"/>
+           <widget class="QListView" name="ttsListView"/>
           </item>
           <item>
            <widget class="QPushButton" name="ttsPlayButton">
