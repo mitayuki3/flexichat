@@ -84,11 +84,19 @@ int main(int argc, char *argv[]) {
             }
         });
 
-    // TTS シグナルの接続（MainWindow → OpenAITTSClient）
+    // TTS シグナルの接続（MainWindow → MainLogic）
     QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, logic,
                      &MainLogic::synthesize);
     QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, audioPlayer,
                      &QMediaPlayer::play);
+
+    // 音声ファイル生成完了通知
+    QObject::connect(logic, &MainLogic::ttsFileCreated, &mainWindow,
+                     &MainWindow::appendTtsOutput);
+
+    // 音声ファイルが選択された
+    QObject::connect(&mainWindow, &MainWindow::ttsFileActivated, logic,
+                     &MainLogic::onTtsFileActivated);
 
     QObject::connect(logic, &MainLogic::mediaSourceChanged, audioPlayer,
                      &QMediaPlayer::setSource);
