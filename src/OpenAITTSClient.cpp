@@ -163,11 +163,6 @@ void OpenAITTSClient::setFormat(const QString &format) { m_format = format; }
 void OpenAITTSClient::setOutputDir(const QString &dir) { m_outputDir = dir; }
 
 /**
- * @brief リセット
- */
-void OpenAITTSClient::reset() { stop(); }
-
-/**
  * @brief ファイルパスを生成
  * @param format ファイルフォーマット
  * @return 生成されたファイルパス

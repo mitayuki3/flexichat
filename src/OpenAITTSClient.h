@@ -24,9 +24,6 @@ public:
     void setFormat(const QString &format);
     void setOutputDir(const QString &dir);
 
-public slots:
-    void reset();
-
 signals:
     void synthesizeCompleted(const QString &filePath);
     void errorOccurred(const QString &error);
