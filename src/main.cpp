@@ -5,6 +5,7 @@
 #include "ProfileManager.h"
 #include "SettingsDialog.h"
 #include <QApplication>
+#include <QAudioOutput>
 #include <QFont>
 #include <QMediaPlayer>
 #include <QScopedPointer>
