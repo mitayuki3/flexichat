@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("FlexiChat");
     app.setApplicationVersion("1.0.0");
 
+    qRegisterMetaType<TtsSettingsData>();
+
     QThread *workerThread = new QThread(&app);
 
     // 設定の読み込み
