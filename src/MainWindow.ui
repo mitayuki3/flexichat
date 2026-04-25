@@ -137,76 +137,76 @@
        <attribute name="title">
         <string>TTS</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QPlainTextEdit" name="ttsTextEdit">
-          <property name="plainText">
-           <string>これは AI 合成音声です</string>
-          </property>
-          <property name="placeholderText">
-           <string>音声に変換するテキストを入力してください</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
+         <layout class="QVBoxLayout" name="ttsInputLayout">
           <item>
-           <widget class="QProgressBar" name="ttsProgressBar">
-            <property name="value">
-             <number>0</number>
+           <widget class="QPlainTextEdit" name="ttsTextEdit">
+            <property name="plainText">
+             <string>これは AI 合成音声です</string>
+            </property>
+            <property name="placeholderText">
+             <string>音声に変換するテキストを入力してください</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="ttsGenerateButton">
             <property name="text">
-             <string>生成</string>
+             <string>合成</string>
             </property>
            </widget>
+          </item>
+          <item>
+           <layout class="QFormLayout" name="formLayout">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>モデル</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QListWidget" name="ttsModelListWidget">
+              <item>
+               <property name="text">
+                <string>irodori-tts-500m-v2</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>irodori-tts-500m-v2-voicedesign</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>ボイス</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="ttsVoiceCombo">
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="ttsOutputLayout">
+          <item>
+           <widget class="QListWidget" name="ttsListWidget"/>
           </item>
           <item>
            <widget class="QPushButton" name="ttsPlayButton">
             <property name="text">
              <string>再生</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QFormLayout" name="formLayout">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>モデル</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QListWidget" name="ttsModelListWidget">
-            <item>
-             <property name="text">
-              <string>irodori-tts-500m-v2</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>irodori-tts-500m-v2-voicedesign</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>ボイス</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QComboBox" name="ttsVoiceCombo">
-            <property name="editable">
-             <bool>true</bool>
             </property>
            </widget>
           </item>
