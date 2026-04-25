@@ -95,12 +95,14 @@ int main(int argc, char *argv[]) {
                      &MainWindow::appendTtsOutput);
 
     // 音声ファイルが選択された
+    QObject::connect(&mainWindow, &MainWindow::ttsFileSelected, logic,
+                     &MainLogic::onTtsFileSelected);
     QObject::connect(&mainWindow, &MainWindow::ttsFileActivated, logic,
                      &MainLogic::onTtsFileActivated);
 
     QObject::connect(logic, &MainLogic::mediaSourceChanged, audioPlayer,
                      &QMediaPlayer::setSource);
-    QObject::connect(audioPlayer, &QMediaPlayer::sourceChanged, audioPlayer,
+    QObject::connect(logic, &MainLogic::requestedToPlay, audioPlayer,
                      &QMediaPlayer::play);
 
     // オーディオプレイヤー状態同期

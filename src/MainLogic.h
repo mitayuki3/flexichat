@@ -15,12 +15,14 @@ signals:
     void statusOccured(QString const &message);
     void mediaSourceChanged(const QUrl &source);
     void ttsFileCreated(const QString &filePath);
+    void requestedToPlay();
 
 public slots:
     void updateSettings(TtsSettingsData const &data);
     void synthesize(QString const &text);
     void onReplyReceived(QString const &reply);
     void onSynthesizeCompleted(const QString &filePath);
+    void onTtsFileSelected(const QString &filePath);
     void onTtsFileActivated(const QString &filePath);
 
 private:

@@ -44,6 +44,7 @@ signals:
     void synthesizeRequested(const QString &text);
     void autoplayChanged(bool checked);
     void ttsPlayRequested();
+    void ttsFileSelected(const QString &filePath);
     void ttsFileActivated(const QString &filePath);
 
 private slots:
@@ -52,6 +53,7 @@ private slots:
     void onPlayTtsClicked();
     void onChatDisplayClicked(const QModelIndex &index);
     void generateTtsSpeech();
+    void onTtsListRowChanged(int row);
     void onTtsListActivated(const QModelIndex &index);
 
 private:

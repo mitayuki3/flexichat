@@ -79,7 +79,9 @@ void MainWindow::connectSignals() {
     connect(ui->ttsPlayButton, &QPushButton::clicked, this,
             &MainWindow::ttsPlayRequested);
 
-    // TTS リストがアクティベートされた
+    // TTS リスト
+    connect(ui->ttsListWidget, &QListWidget::currentRowChanged, this,
+            &MainWindow::onTtsListRowChanged);
     connect(ui->ttsListWidget, &QListWidget::activated, this,
             &MainWindow::onTtsListActivated);
 }
@@ -318,6 +320,12 @@ void MainWindow::showStatusMessage(const QString &status) {
  */
 void MainWindow::appendTtsOutput(QString const &filePath) {
     ui->ttsListWidget->addItem(filePath);
+}
+
+void MainWindow::onTtsListRowChanged(int row){
+    if (QListWidgetItem *item = ui->ttsListWidget->item(row)) {
+        emit ttsFileSelected(item->text());
+    }
 }
 
 /**
