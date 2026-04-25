@@ -16,6 +16,7 @@ signals:
     void mediaSourceChanged(const QUrl &source);
 
 public slots:
+    void updateSettings(AppSettings const &settings);
     void synthesize(QString const &text);
     void onReplyReceived(QString const &reply);
     void onSynthesizeCompleted(const QString &filePath);

@@ -21,6 +21,15 @@ MainLogic::MainLogic(AppSettings const &settings, QObject *parent)
             &MainLogic::statusOccured);
 }
 
+void MainLogic::updateSettings(AppSettings const &settings) {
+    m_autoPlay = settings.loadTtsAutoPlay();
+    m_ttsClient->setBaseUrl(settings.loadTtsBaseUrl());
+    m_ttsClient->setModel(settings.loadTtsModel());
+    m_ttsClient->setVoice(settings.loadTtsVoice());
+    m_ttsClient->setInstructions(settings.loadTtsInstructions());
+    m_ttsClient->setApiKey(settings.loadTtsApiKey());
+}
+
 void MainLogic::synthesize(QString const &text) {
     if (text.isEmpty()) {
         return;
