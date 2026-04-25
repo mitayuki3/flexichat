@@ -259,8 +259,6 @@ void MainWindow::onPlayTtsClicked() {
         return;
     }
 
-    ui->statusbar->showMessage("TTS 合成中...");
-
     // テキストを保存
     m_pendingTtsText = text.startsWith("AI: ") ? text.mid(4) : text;
 

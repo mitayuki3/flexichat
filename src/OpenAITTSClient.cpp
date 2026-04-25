@@ -19,7 +19,7 @@ static const QString DEFAULT_TTS_ENDPOINT = "/v1/audio/speech";
  */
 /**
  * @fn OpenAITTSClient::synthesizeCompleted
- * @brief 音声生成完了
+ * @brief 音声合成完了
  * @param filePath 生成された音声ファイルのパス
  */
 /**
@@ -101,7 +101,7 @@ void OpenAITTSClient::synthesize(const QString &text) {
     QByteArray postData = doc.toJson(QJsonDocument::Compact);
 
     // 生成開始メッセージ
-    emit statusChanged("音声生成中...");
+    emit statusChanged("音声合成中...");
 
     m_currentReply = m_networkManager->post(request, postData);
 }
@@ -243,5 +243,5 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
     file.close();
 
     emit synthesizeCompleted(filePath);
-    emit statusChanged("音声生成完了: " + filePath);
+    emit statusChanged("音声合成完了: " + filePath);
 }
