@@ -17,7 +17,6 @@ int main(int argc, char *argv[]) {
     app.setApplicationVersion("1.0.0");
 
     QThread *workerThread = new QThread(&app);
-    QObject *workerRoot = new QObject(&app);
 
     // 設定の読み込み
     AppSettings *settings = new AppSettings();
@@ -28,7 +27,7 @@ int main(int argc, char *argv[]) {
                      &MainLogic::updateSettings);
 
     // LM Studio クライアントの作成
-    LMStudioClient *client = new LMStudioClient(workerRoot);
+    LMStudioClient *client = new LMStudioClient();
     client->setBaseUrl(settings->loadApiBaseUrl());
 
     // オーディオプレイヤーの作成
