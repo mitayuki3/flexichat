@@ -78,6 +78,8 @@ void MainWindow::connectSignals() {
             &MainWindow::generateTtsSpeech);
     connect(ui->ttsPlayButton, &QPushButton::clicked, this,
             &MainWindow::ttsPlayRequested);
+    connect(ui->ttsVoiceCombo, &QComboBox::currentTextChanged, this,
+            &MainWindow::voiceChanged);
 
     // TTS リスト
     connect(ui->ttsListWidget, &QListWidget::currentRowChanged, this,
