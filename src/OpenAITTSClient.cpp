@@ -177,7 +177,7 @@ QString OpenAITTSClient::generateFilePath(const QString &format) const {
     }
 
     // ファイル名: {時刻}.{format}
-    QString timeStr = QTime::currentTime().toString("HHmmss");
+    QString timeStr = QTime::currentTime().toString("HHmmsszzz");
     QString fileName = QString("%1.%2").arg(timeStr, format);
 
     return fullDateDir + "/" + fileName;
