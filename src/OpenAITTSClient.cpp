@@ -1,89 +1,110 @@
 #include "OpenAITTSClient.h"
+#include <QDate>
 #include <QDebug>
 #include <QDir>
+#include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkRequest>
-#include <QUrlQuery>
+#include <QTime>
 
 // デフォルトの TTS エンドポイント
 static const QString DEFAULT_TTS_ENDPOINT = "/v1/audio/speech";
 
 /**
- * @brief コンストラクタ
+ * @class OpenAITTSClient
+ * @brief OpenAI 互換 TTS API クライアント
+ * ローカル TTS サーバー（http://localhost:8880）にリクエストを送信し、
+ * 返ってきた音声データをファイルとして保存する。
  */
-OpenAITTSClient::OpenAITTSClient(QObject *parent)
+/**
+ * @fn OpenAITTSClient::synthesizeCompleted
+ * @brief 音声合成完了
+ * @param filePath 生成された音声ファイルのパス
+ */
+/**
+ * @fn OpenAITTSClient::errorOccurred
+ * @brief エラー発生
+ * @param error エラーメッセージ
+ */
+
+/**
+ * @fn OpenAITTSClient::statusChanged
+ * @brief ステータス更新
+ * @param status ステータスメッセージ
+ */
+
+/**
+ * @brief コンストラクタ
+ * @param outputDir 音声ファイルの出力先ディレクトリ
+ */
+OpenAITTSClient::OpenAITTSClient(const QString &outputDir, QObject *parent)
     : QObject(parent), m_networkManager(new QNetworkAccessManager(this)),
-    m_player(new QMediaPlayer(this)), m_audioOutput(new QAudioOutput(this)),
     m_currentReply(nullptr), m_baseUrl("http://localhost:8880"), m_apiKey(""),
-    m_voice("alloy"), m_model("tts-1"), m_format("mp3"), m_isPlaying(false) {
+    m_voice("alloy"), m_model("tts-1"), m_format("mp3"),
+    m_outputDir(outputDir) {
     m_networkManager->setTransferTimeout(120000); // 120 秒タイムアウト
 
     connect(m_networkManager, &QNetworkAccessManager::finished, this,
             &OpenAITTSClient::onSynthesizeFinished);
-
-    // マルチメディアシグナル接続
-    m_audioOutput->setParent(m_player); // オーナーはプレイヤー
-    m_player->setAudioOutput(m_audioOutput);
-    connect(m_player, &QMediaPlayer::mediaStatusChanged, this,
-            [this](QMediaPlayer::MediaStatus status) {
-                if (status == QMediaPlayer::EndOfMedia) {
-            m_isPlaying = false;
-                    emit playbackFinished();
-                }
-    });
-    connect(m_player, &QMediaPlayer::errorOccurred, this,
-            [=](QMediaPlayer::Error error) {
-                Q_UNUSED(error);
-        m_isPlaying = false;
-                emit errorOccurred("再生エラー");
-    });
 }
 
 /**
  * @brief デストラクタ
  */
-OpenAITTSClient::~OpenAITTSClient() {
-    if (m_player) {
-        m_player->stop();
-    }
-}
+OpenAITTSClient::~OpenAITTSClient() { stop(); }
 
 /**
- * @brief テキストを音声に変換して再生
+ * @brief テキストを音声に変換してファイルに保存
  * @param text 音声化するテキスト
- * @param format 音声フォーマット（mp3 など）
  */
-void OpenAITTSClient::synthesize(const QString &text, const QString &format) {
-    if (text.isEmpty() || m_isPlaying) {
+void OpenAITTSClient::synthesize(const QString &text) {
+    if (text.isEmpty()) {
+        emit errorOccurred("音声化するテキストが空です");
         return;
     }
 
-    m_format = format.isEmpty() ? "mp3" : format;
+    // 以前のリクエストがあれば停止
+    stop();
 
-    sendSynthesizeRequest(text);
-}
+    auto url = QUrl(m_baseUrl + DEFAULT_TTS_ENDPOINT);
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Accept", "audio/mpeg");
 
-void OpenAITTSClient::playLastResponse() {
-    if (!m_tempFile || !m_tempFile->exists()) {
-        // まだ生成していない
-        return;
+    // API キーがある場合は認証ヘッダー追加
+    if (!m_apiKey.isEmpty()) {
+        request.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
     }
-    // QMediaPlayer で再生
-    QUrl fileUrl = QUrl::fromLocalFile(m_tempFile->fileName());
-    m_player->setSource(fileUrl);
-    m_player->play();
-    m_isPlaying = true;
-    emit playbackStarted();
+
+    // リクエストボディ
+    QJsonObject body;
+    body["input"] = text;
+    if (!m_model.isEmpty()) {
+        body["model"] = m_model;
+    }
+    if (!m_voice.isEmpty()) {
+        body["voice"] = m_voice;
+    }
+    if (!m_instructions.isEmpty()) {
+        body["instructions"] = m_instructions;
+    }
+    if (!m_format.isEmpty()) {
+        body["response_format"] = m_format;
+    }
+    QJsonDocument doc(body);
+    QByteArray postData = doc.toJson(QJsonDocument::Compact);
+
+    // 生成開始メッセージ
+    emit statusChanged("音声合成中...");
+
+    m_currentReply = m_networkManager->post(request, postData);
 }
 
 /**
- * @brief 再生を停止
+ * @brief リクエストを停止
  */
 void OpenAITTSClient::stop() {
-    if (m_player) {
-        m_player->stop();
-    }
     if (m_currentReply) {
         // abort() は finished シグナルを同期的に発火することがあり、
         // onSynthesizeFinished 内で m_currentReply が nullptr にリセットされる。
@@ -93,20 +114,7 @@ void OpenAITTSClient::stop() {
         reply->abort();
         reply->deleteLater();
     }
-    m_isPlaying = false;
-
-    // 一時ファイルを削除
-    if (m_tempFile) {
-        m_tempFile->close();
-        m_tempFile->remove();
-        m_tempFile.reset();
-    }
 }
-
-/**
- * @brief 再生中でないか
- */
-bool OpenAITTSClient::isPlaying() const { return m_isPlaying; }
 
 /**
  * @brief ベース URL の設定
@@ -144,61 +152,30 @@ void OpenAITTSClient::setInstructions(const QString &instructions) {
 void OpenAITTSClient::setFormat(const QString &format) { m_format = format; }
 
 /**
- * @brief 再生リセット
+ * @brief 出力先ディレクトリの設定
+ * @param dir 出力先ディレクトリ
  */
-void OpenAITTSClient::reset() { stop(); }
+void OpenAITTSClient::setOutputDir(const QString &dir) { m_outputDir = dir; }
 
 /**
- * @brief TTS リクエスト送信
+ * @brief ファイルパスを生成
+ * @param format ファイルフォーマット
+ * @return 生成されたファイルパス
  */
-void OpenAITTSClient::sendSynthesizeRequest(const QString &text) {
-    // テキストチェック
-    if (text.isEmpty()) {
-        emit errorOccurred("音声化するテキストが空です");
-        return;
+QString OpenAITTSClient::generateFilePath(const QString &format) const {
+    // 日付別ディレクトリ
+    QString dateDir = QDate::currentDate().toString("yyyyMMdd");
+    QDir dir(m_outputDir);
+    QString fullDateDir = m_outputDir + "/" + dateDir;
+    if (!QDir(fullDateDir).exists()) {
+        QDir(m_outputDir).mkpath(dateDir);
     }
 
-    if (!m_player || !m_audioOutput) {
-        emit errorOccurred("マルチメディア環境が初期化されていません");
-        return;
-    }
+    // ファイル名: {時刻}.{format}
+    QString timeStr = QTime::currentTime().toString("HHmmsszzz");
+    QString fileName = QString("%1.%2").arg(timeStr, format);
 
-    // 以前のリクエストがあれば停止
-    stop();
-
-    auto url = QUrl(m_baseUrl + DEFAULT_TTS_ENDPOINT);
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    request.setRawHeader("Accept", "audio/mpeg");
-
-    // API キーがある場合は認証ヘッダー追加
-    if (!m_apiKey.isEmpty()) {
-        request.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
-    }
-
-    // リクエストボディ
-    QJsonObject body;
-    body["input"] = text;
-    if (!m_model.isEmpty()) {
-        body["model"] = m_model;
-    }
-    if (!m_voice.isEmpty()) {
-        body["voice"] = m_voice;
-    }
-    if (!m_instructions.isEmpty()) {
-        body["instructions"] = m_instructions;
-    }
-    if (!m_format.isEmpty()) {
-        body["response_format"] = m_format;
-    }
-    QJsonDocument doc(body);
-    QByteArray postData = doc.toJson(QJsonDocument::Compact);
-
-    // 生成開始メッセージ
-    emit statusChanged("音声生成中...");
-
-    m_currentReply = m_networkManager->post(request, postData);
-    m_isPlaying = true;
+    return fullDateDir + "/" + fileName;
 }
 
 /**
@@ -215,7 +192,6 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
     }
 
     if (reply->error() != QNetworkReply::NoError) {
-        m_isPlaying = false;
         if (m_currentReply == reply) {
             m_currentReply = nullptr;
         }
@@ -235,7 +211,6 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
     QByteArray audioData = reply->readAll();
 
     if (audioData.isEmpty()) {
-        m_isPlaying = false;
         if (m_currentReply == reply) {
             m_currentReply = nullptr;
         }
@@ -249,19 +224,19 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
     }
     reply->deleteLater();
 
-    // 一時ファイルを作成
-    m_tempFile = std::make_unique<QTemporaryFile>(
-        QDir::tempPath() + "/flexichat_XXXXXX." + m_format);
-    if (!m_tempFile->open()) {
-        m_isPlaying = false;
-        emit errorOccurred("一時ファイルを作成できません");
+    // ファイルパス生成
+    QString filePath = generateFilePath(m_format);
+
+    // ファイルに書き出し
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        emit errorOccurred("音声ファイルを保存できません: " + filePath);
         return;
     }
 
-    // 音声データをファイルに書き込み
-    m_tempFile->write(audioData);
-    m_tempFile->flush();
-    m_tempFile->close();
+    file.write(audioData);
+    file.close();
 
-    playLastResponse();
+    emit synthesizeCompleted(filePath);
+    emit statusChanged("音声合成完了: " + filePath);
 }

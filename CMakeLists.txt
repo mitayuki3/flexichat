@@ -17,6 +17,8 @@ set(PROJECT_SOURCES
     src/AppSettings.cpp
     src/LMStudioClient.cpp
     src/main.cpp
+    src/MainLogic.cpp
+    src/MainLogic.h
     src/MainWindow.cpp
     src/MainWindow.ui
     src/OpenAITTSClient.cpp

@@ -1,37 +1,44 @@
 #include "AppSettings.h"
 #include "LMStudioClient.h"
+#include "MainLogic.h"
 #include "MainWindow.h"
-#include "OpenAITTSClient.h"
 #include "ProfileManager.h"
 #include "SettingsDialog.h"
 #include <QApplication>
+#include <QAudioOutput>
 #include <QFont>
+#include <QMediaPlayer>
 #include <QScopedPointer>
+#include <QThread>
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     app.setApplicationName("FlexiChat");
     app.setApplicationVersion("1.0.0");
 
-    QObject *workerRoot = new QObject(&app);
+    qRegisterMetaType<TtsSettingsData>();
+
+    QThread *workerThread = new QThread(&app);
 
     // 設定の読み込み
-    AppSettings settings;
+    AppSettings *settings = new AppSettings(&app);
+
+    TtsSettingsData initData = TtsSettingsData::fromAppSettings(*settings);
+    MainLogic *logic = new MainLogic(initData);
+    QObject::connect(settings, &AppSettings::changedTts, logic,
+                     &MainLogic::updateSettings);
 
     // LM Studio クライアントの作成
-    LMStudioClient *client = new LMStudioClient(workerRoot);
-    client->setBaseUrl(settings.loadApiBaseUrl());
+    LMStudioClient *client = new LMStudioClient(&app);
+    client->setBaseUrl(settings->loadApiBaseUrl());
 
-    // TTS クライアントの作成
-    OpenAITTSClient *ttsClient = new OpenAITTSClient(workerRoot);
-    ttsClient->setBaseUrl(settings.loadTtsBaseUrl());
-    ttsClient->setModel(settings.loadTtsModel());
-    ttsClient->setVoice(settings.loadTtsVoice());
-    ttsClient->setInstructions(settings.loadTtsInstructions());
-    ttsClient->setApiKey(settings.loadTtsApiKey());
+    // オーディオプレイヤーの作成
+    QMediaPlayer *audioPlayer = new QMediaPlayer(&app);
+    QAudioOutput *audioOutput = new QAudioOutput(audioPlayer);
+    audioPlayer->setAudioOutput(audioOutput);
 
     // プロファイルマネージャーの作成
-    QScopedPointer<ProfileManager> profileManager(new ProfileManager(&settings));
+    QScopedPointer<ProfileManager> profileManager(new ProfileManager(settings));
     profileManager->loadProfiles();
 
     // 初期プロファイルをクライアントに設定
@@ -56,16 +63,13 @@ int main(int argc, char *argv[]) {
     QObject::connect(client, &LMStudioClient::requestCompleted, &mainWindow,
                      &MainWindow::onApiRequestFinished);
 
-    QObject::connect(client, &LMStudioClient::replyReceived, ttsClient,
-                     [ttsClient, &settings](const QString &reply) {
-        // 自動再生する
-        if (settings.loadTtsAutoPlay()) {
-            ttsClient->synthesize(reply);
-        }
-    });
+    QObject::connect(client, &LMStudioClient::replyReceived, logic,
+                     &MainLogic::onReplyReceived);
+    QObject::connect(logic, &MainLogic::statusOccured, &mainWindow,
+                     &MainWindow::showStatusMessage);
 
     // MainWindow のチェックボックス状態変化を保存
-    QObject::connect(&mainWindow, &MainWindow::autoplayChanged, &settings,
+    QObject::connect(&mainWindow, &MainWindow::autoplayChanged, settings,
                      &AppSettings::saveTtsAutoPlay);
 
     // MainWindow → LMStudioClient のシグナル仲介
@@ -81,27 +85,21 @@ int main(int argc, char *argv[]) {
         });
 
     // TTS シグナルの接続（MainWindow → OpenAITTSClient）
-    QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, ttsClient,
-                     [ttsClient, &mainWindow]() {
-        QString text = mainWindow.getPendingTtsText();
-        if (!text.isEmpty()) {
-            ttsClient->synthesize(text);
-        }
-    });
-    QObject::connect(&mainWindow, &MainWindow::stopTtsRequested, ttsClient,
-                     &OpenAITTSClient::stop);
-    QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, ttsClient,
-                     &OpenAITTSClient::playLastResponse);
+    QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, logic,
+                     &MainLogic::synthesize);
+    QObject::connect(&mainWindow, &MainWindow::stopTtsRequested, audioPlayer,
+                     &QMediaPlayer::stop);
+    QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, audioPlayer,
+                     &QMediaPlayer::play);
 
-    // TTS → MainWindow のシグナル接続（再生状態の更新）
-    QObject::connect(ttsClient, &OpenAITTSClient::playbackStarted, &mainWindow,
+    QObject::connect(logic, &MainLogic::mediaSourceChanged, audioPlayer,
+                     &QMediaPlayer::setSource);
+    QObject::connect(audioPlayer, &QMediaPlayer::sourceChanged, audioPlayer,
+                     &QMediaPlayer::play);
+
+    // オーディオプレイヤー状態同期
+    QObject::connect(audioPlayer, &QMediaPlayer::playingChanged, &mainWindow,
                      &MainWindow::syncTtsButtons);
-    QObject::connect(ttsClient, &OpenAITTSClient::playbackFinished, &mainWindow,
-                     &MainWindow::syncTtsButtons);
-    QObject::connect(ttsClient, &OpenAITTSClient::errorOccurred, &mainWindow,
-                     &MainWindow::showStatusMessage);
-    QObject::connect(ttsClient, &OpenAITTSClient::statusChanged, &mainWindow,
-                     &MainWindow::showStatusMessage);
 
     // 設定ダイアログの表示（シグナル経由で開く）
     QObject::connect(
@@ -118,6 +116,15 @@ int main(int argc, char *argv[]) {
             dialog.exec();
         });
 
+    QObject::connect(workerThread, &QThread::finished, logic,
+                     &QObject::deleteLater);
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, workerThread,
+                     [workerThread]() {
+                         workerThread->quit();
+                         workerThread->wait();
+                     });
+    logic->moveToThread(workerThread);
+    workerThread->start();
     mainWindow.show();
     return app.exec();
 }

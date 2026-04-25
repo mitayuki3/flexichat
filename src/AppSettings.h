@@ -5,6 +5,21 @@
 #include <QObject>
 #include <QSettings>
 
+class AppSettings;
+
+struct TtsSettingsData {
+    QString apiKey;
+    QString model;
+    QString voice;
+    QString instructions;
+    QString baseUrl;
+    QString outputDir;
+    bool autoPlay;
+
+    static TtsSettingsData fromAppSettings(AppSettings const &settings);
+};
+Q_DECLARE_METATYPE(TtsSettingsData)
+
 class AppSettings : public QObject {
     Q_OBJECT
 
@@ -36,6 +51,11 @@ public:
     bool loadTtsAutoPlay() const;
     void saveTtsBaseUrl(const QString &url);
     QString loadTtsBaseUrl() const;
+    void saveTtsOutputDir(const QString &dir);
+    QString loadTtsOutputDir() const;
+
+signals:
+    void changedTts(TtsSettingsData const &data);
 
 private:
     QSettings m_settings;
@@ -48,4 +68,5 @@ private:
     static const QString KEY_TTS_INSTRUCTIONS;
     static const QString KEY_TTS_AUTO_PLAY;
     static const QString KEY_TTS_BASE_URL;
+    static const QString KEY_TTS_OUTPUT_DIR;
 };

@@ -111,7 +111,7 @@
              <bool>false</bool>
             </property>
             <property name="text">
-             <string>音声再生</string>
+             <string>音声合成</string>
             </property>
            </widget>
           </item>
@@ -150,6 +150,9 @@
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <widget class="QPlainTextEdit" name="ttsTextEdit">
+          <property name="plainText">
+           <string>これは AI 合成音声です</string>
+          </property>
           <property name="placeholderText">
            <string>音声に変換するテキストを入力してください</string>
           </property>
