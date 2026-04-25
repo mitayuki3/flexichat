@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     QThread *workerThread = new QThread(&app);
 
     // 設定の読み込み
-    AppSettings *settings = new AppSettings();
+    AppSettings *settings = new AppSettings(&app);
 
     TtsSettingsData initData = TtsSettingsData::fromAppSettings(*settings);
     MainLogic *logic = new MainLogic(initData);
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
                      &MainLogic::updateSettings);
 
     // LM Studio クライアントの作成
-    LMStudioClient *client = new LMStudioClient();
+    LMStudioClient *client = new LMStudioClient(&app);
     client->setBaseUrl(settings->loadApiBaseUrl());
 
     // オーディオプレイヤーの作成

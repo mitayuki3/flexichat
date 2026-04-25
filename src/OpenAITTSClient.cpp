@@ -52,12 +52,7 @@ OpenAITTSClient::OpenAITTSClient(const QString &outputDir, QObject *parent)
 /**
  * @brief デストラクタ
  */
-OpenAITTSClient::~OpenAITTSClient() {
-    if (m_currentReply) {
-        m_currentReply->abort();
-        m_currentReply->deleteLater();
-    }
-}
+OpenAITTSClient::~OpenAITTSClient() { stop(); }
 
 /**
  * @brief テキストを音声に変換してファイルに保存
