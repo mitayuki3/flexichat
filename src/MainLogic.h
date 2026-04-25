@@ -4,12 +4,12 @@
 #include <QObject>
 
 class AppSettings;
+class OpenAITTSClient;
 
-class MainLogic : public QObject
-{
+class MainLogic : public QObject {
     Q_OBJECT
 public:
-    explicit MainLogic(AppSettings const *settings, QObject *parent = nullptr);
+    explicit MainLogic(AppSettings const &settings, QObject *parent = nullptr);
 
 signals:
     void statusOccured(QString const &message);
@@ -21,7 +21,8 @@ public slots:
     void onSynthesizeCompleted(const QString &filePath);
 
 private:
-    AppSettings const *m_settings;
+    OpenAITTSClient *m_ttsClient;
+    bool m_autoPlay;
 };
 
 #endif // MAINLOGIC_H

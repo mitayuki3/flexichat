@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     // 設定の読み込み
     AppSettings settings;
 
-    MainLogic *logic = new MainLogic(&settings);
+    MainLogic *logic = new MainLogic(settings);
 
     // LM Studio クライアントの作成
     LMStudioClient *client = new LMStudioClient(workerRoot);
