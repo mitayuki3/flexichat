@@ -231,7 +231,6 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
 
     // ファイルパス生成
     QString filePath = generateFilePath(m_format);
-    m_lastFilePath = filePath;
 
     // ファイルに書き出し
     QFile file(filePath);

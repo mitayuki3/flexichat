@@ -42,7 +42,6 @@ private:
     QString m_instructions;
     QString m_format;
     QString m_outputDir;
-    QString m_lastFilePath;
 
     QString generateFilePath(const QString &format) const;
 };
