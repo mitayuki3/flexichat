@@ -47,8 +47,6 @@ OpenAITTSClient::OpenAITTSClient(const QString &outputDir, QObject *parent)
 
     connect(m_networkManager, &QNetworkAccessManager::finished, this,
             &OpenAITTSClient::onSynthesizeFinished);
-
-    ensureOutputDirExists();
 }
 
 /**
@@ -139,23 +137,12 @@ void OpenAITTSClient::setSeed(int seed) { m_seed = seed; }
  */
 void OpenAITTSClient::setOutputDir(const QString &dir) {
     m_outputDir = dir;
-    ensureOutputDirExists();
 }
 
 /**
  * @brief リセット
  */
 void OpenAITTSClient::reset() { stop(); }
-
-/**
- * @brief 出力ディレクトリが存在することを確認
- */
-void OpenAITTSClient::ensureOutputDirExists() const {
-    QDir dir(m_outputDir);
-    if (!dir.exists()) {
-        dir.mkpath(m_outputDir);
-    }
-}
 
 /**
  * @brief ファイルパスを生成

@@ -51,5 +51,4 @@ private:
 
     void sendSynthesizeRequest(const QString &text);
     QString generateFilePath(const QString &format) const;
-    void ensureOutputDirExists() const;
 };
