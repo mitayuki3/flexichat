@@ -115,6 +115,13 @@ int main(int argc, char *argv[]) {
             dialog.exec();
         });
 
+    QObject::connect(workerThread, &QThread::finished, logic,
+                     &QObject::deleteLater);
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, workerThread,
+                     [workerThread]() {
+                         workerThread->quit();
+                         workerThread->wait();
+                     });
     logic->moveToThread(workerThread);
     workerThread->start();
     mainWindow.show();
