@@ -78,6 +78,10 @@ void MainWindow::connectSignals() {
             &MainWindow::generateTtsSpeech);
     connect(ui->ttsPlayButton, &QPushButton::clicked, this,
             &MainWindow::ttsPlayRequested);
+
+    // TTS リストがアクティベートされた
+    connect(ui->ttsListWidget, &QListWidget::activated, this,
+            &MainWindow::onTtsListActivated);
 }
 
 /**
@@ -306,4 +310,25 @@ QString MainWindow::getPendingTtsText() const { return m_pendingTtsText; }
  */
 void MainWindow::showStatusMessage(const QString &status) {
     ui->statusbar->showMessage(status);
+}
+
+/**
+ * @brief TTS 生成完了時
+ * @param filePath 生成されたファイルパス
+ */
+void MainWindow::appendTtsOutput(QString const &filePath) {
+    ui->ttsListWidget->addItem(filePath);
+}
+
+/**
+ * @brief TTS リストアクティベート時
+ * @param index アクティベートされたインデックス
+ */
+void MainWindow::onTtsListActivated(const QModelIndex &index) {
+    if (!index.isValid()) {
+        return;
+    }
+    if (QListWidgetItem *item = ui->ttsListWidget->itemFromIndex(index)) {
+        emit ttsFileActivated(item->text());
+    }
 }

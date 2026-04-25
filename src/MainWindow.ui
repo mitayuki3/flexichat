@@ -201,7 +201,14 @@
         <item>
          <layout class="QVBoxLayout" name="ttsOutputLayout">
           <item>
-           <widget class="QListView" name="ttsListView"/>
+           <widget class="QListWidget" name="ttsListWidget">
+            <property name="editTriggers">
+             <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="ttsPlayButton">
