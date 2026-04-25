@@ -28,6 +28,7 @@ void MainLogic::updateSettings(TtsSettingsData const &data) {
     m_ttsClient->setVoice(data.voice);
     m_ttsClient->setInstructions(data.instructions);
     m_ttsClient->setApiKey(data.apiKey);
+    m_ttsClient->setOutputDir(data.outputDir);
 }
 
 void MainLogic::synthesize(QString const &text) {
