@@ -20,16 +20,16 @@ int main(int argc, char *argv[]) {
     QObject *workerRoot = new QObject(&app);
 
     // 設定の読み込み
-    AppSettings settings;
+    AppSettings *settings = new AppSettings();
 
-    TtsSettingsData initData = TtsSettingsData::fromAppSettings(settings);
+    TtsSettingsData initData = TtsSettingsData::fromAppSettings(*settings);
     MainLogic *logic = new MainLogic(initData);
-    QObject::connect(&settings, &AppSettings::changedTts, logic,
+    QObject::connect(settings, &AppSettings::changedTts, logic,
                      &MainLogic::updateSettings);
 
     // LM Studio クライアントの作成
     LMStudioClient *client = new LMStudioClient(workerRoot);
-    client->setBaseUrl(settings.loadApiBaseUrl());
+    client->setBaseUrl(settings->loadApiBaseUrl());
 
     // オーディオプレイヤーの作成
     QMediaPlayer *audioPlayer = new QMediaPlayer(&app);
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     audioPlayer->setAudioOutput(audioOutput);
 
     // プロファイルマネージャーの作成
-    QScopedPointer<ProfileManager> profileManager(new ProfileManager(&settings));
+    QScopedPointer<ProfileManager> profileManager(new ProfileManager(settings));
     profileManager->loadProfiles();
 
     // 初期プロファイルをクライアントに設定
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
                      &MainWindow::showStatusMessage);
 
     // MainWindow のチェックボックス状態変化を保存
-    QObject::connect(&mainWindow, &MainWindow::autoplayChanged, &settings,
+    QObject::connect(&mainWindow, &MainWindow::autoplayChanged, settings,
                      &AppSettings::saveTtsAutoPlay);
 
     // MainWindow → LMStudioClient のシグナル仲介
