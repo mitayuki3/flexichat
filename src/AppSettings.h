@@ -18,6 +18,7 @@ struct TtsSettingsData {
 
     static TtsSettingsData fromAppSettings(AppSettings const &settings);
 };
+Q_DECLARE_METATYPE(TtsSettingsData)
 
 class AppSettings : public QObject {
     Q_OBJECT
