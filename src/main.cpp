@@ -87,8 +87,6 @@ int main(int argc, char *argv[]) {
     // TTS シグナルの接続（MainWindow → OpenAITTSClient）
     QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, logic,
                      &MainLogic::synthesize);
-    QObject::connect(&mainWindow, &MainWindow::stopTtsRequested, audioPlayer,
-                     &QMediaPlayer::stop);
     QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, audioPlayer,
                      &QMediaPlayer::play);
 

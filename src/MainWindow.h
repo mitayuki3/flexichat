@@ -41,7 +41,6 @@ signals:
     void profileChangeRequested(const QString &profileId);
     void openSettingsRequested();
     void synthesizeRequested(const QString &text);
-    void stopTtsRequested();
     void autoplayChanged(bool checked);
     void ttsPlayRequested();
 
@@ -49,7 +48,6 @@ private slots:
     void onSendClicked();
     void onProfileComboActivated(int index);
     void onPlayTtsClicked();
-    void onStopTtsClicked();
     void onChatDisplayClicked(const QModelIndex &index);
     void generateTtsSpeech();
 

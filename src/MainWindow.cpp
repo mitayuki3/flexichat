@@ -63,8 +63,6 @@ void MainWindow::connectSignals() {
     // TTS ボタンの接続
     connect(ui->playTtsButton, &QPushButton::clicked, this,
             &MainWindow::onPlayTtsClicked);
-    connect(ui->stopTtsButton, &QPushButton::clicked, this,
-            &MainWindow::onStopTtsClicked);
 
     connect(ui->chatDisplay, &QListView::activated, this,
             [this](const QModelIndex &index) {
@@ -267,15 +265,6 @@ void MainWindow::onPlayTtsClicked() {
 }
 
 /**
- * @brief 音声停止ボタンクリック時
- * 再生中の TTS を停止（シグナル経由）
- */
-void MainWindow::onStopTtsClicked() {
-    m_pendingTtsText = "";
-    emit stopTtsRequested();
-}
-
-/**
  * @brief チャットディスプレイクリック時
  * 選択ボタンの同期
  */
@@ -304,7 +293,6 @@ void MainWindow::syncTtsButtons() {
     // TTS クライアントのステータスは main.cpp からシグナルで更新
     // 再生中でなければ再生ボタン有効
     ui->playTtsButton->setEnabled(m_pendingTtsText.isEmpty() == false);
-    ui->stopTtsButton->setEnabled(false);
 }
 
 /**
