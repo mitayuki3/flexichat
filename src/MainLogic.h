@@ -3,20 +3,20 @@
 
 #include <QObject>
 
-class AppSettings;
+struct TtsSettingsData;
 class OpenAITTSClient;
 
 class MainLogic : public QObject {
     Q_OBJECT
 public:
-    explicit MainLogic(AppSettings const &settings, QObject *parent = nullptr);
+    explicit MainLogic(TtsSettingsData const &data, QObject *parent = nullptr);
 
 signals:
     void statusOccured(QString const &message);
     void mediaSourceChanged(const QUrl &source);
 
 public slots:
-    void updateSettings(AppSettings const &settings);
+    void updateSettings(TtsSettingsData const &data);
     void synthesize(QString const &text);
     void onReplyReceived(QString const &reply);
     void onSynthesizeCompleted(const QString &filePath);

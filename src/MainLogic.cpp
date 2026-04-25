@@ -2,14 +2,14 @@
 #include "AppSettings.h"
 #include "OpenAITTSClient.h"
 
-MainLogic::MainLogic(AppSettings const &settings, QObject *parent)
-    : QObject{parent}, m_autoPlay(settings.loadTtsAutoPlay()) {
-    m_ttsClient = new OpenAITTSClient(settings.loadTtsOutputDir(), this);
-    m_ttsClient->setBaseUrl(settings.loadTtsBaseUrl());
-    m_ttsClient->setModel(settings.loadTtsModel());
-    m_ttsClient->setVoice(settings.loadTtsVoice());
-    m_ttsClient->setInstructions(settings.loadTtsInstructions());
-    m_ttsClient->setApiKey(settings.loadTtsApiKey());
+MainLogic::MainLogic(TtsSettingsData const &data, QObject *parent)
+    : QObject{parent}, m_autoPlay(data.autoPlay) {
+    m_ttsClient = new OpenAITTSClient(data.outputDir, this);
+    m_ttsClient->setBaseUrl(data.baseUrl);
+    m_ttsClient->setModel(data.model);
+    m_ttsClient->setVoice(data.voice);
+    m_ttsClient->setInstructions(data.instructions);
+    m_ttsClient->setApiKey(data.apiKey);
     // 完了時ハンドラー
     connect(m_ttsClient, &OpenAITTSClient::synthesizeCompleted, this,
             &MainLogic::onSynthesizeCompleted);
@@ -21,13 +21,13 @@ MainLogic::MainLogic(AppSettings const &settings, QObject *parent)
             &MainLogic::statusOccured);
 }
 
-void MainLogic::updateSettings(AppSettings const &settings) {
-    m_autoPlay = settings.loadTtsAutoPlay();
-    m_ttsClient->setBaseUrl(settings.loadTtsBaseUrl());
-    m_ttsClient->setModel(settings.loadTtsModel());
-    m_ttsClient->setVoice(settings.loadTtsVoice());
-    m_ttsClient->setInstructions(settings.loadTtsInstructions());
-    m_ttsClient->setApiKey(settings.loadTtsApiKey());
+void MainLogic::updateSettings(TtsSettingsData const &data) {
+    m_autoPlay = data.autoPlay;
+    m_ttsClient->setBaseUrl(data.baseUrl);
+    m_ttsClient->setModel(data.model);
+    m_ttsClient->setVoice(data.voice);
+    m_ttsClient->setInstructions(data.instructions);
+    m_ttsClient->setApiKey(data.apiKey);
 }
 
 void MainLogic::synthesize(QString const &text) {

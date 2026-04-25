@@ -22,7 +22,10 @@ int main(int argc, char *argv[]) {
     // 設定の読み込み
     AppSettings settings;
 
-    MainLogic *logic = new MainLogic(settings);
+    TtsSettingsData initData = TtsSettingsData::fromAppSettings(settings);
+    MainLogic *logic = new MainLogic(initData);
+    QObject::connect(&settings, &AppSettings::changedTts, logic,
+                     &MainLogic::updateSettings);
 
     // LM Studio クライアントの作成
     LMStudioClient *client = new LMStudioClient(workerRoot);
