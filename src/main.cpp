@@ -90,20 +90,27 @@ int main(int argc, char *argv[]) {
     QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, audioPlayer,
                      &QMediaPlayer::play);
 
-    // 音声ファイル生成完了通知
+    // ファイルパスを QMediaPlayer の音声ソースに設定するヘルパー
+    auto setAudioSource = [audioPlayer](const QString &filePath) {
+        audioPlayer->setSource(QUrl::fromLocalFile(filePath));
+    };
+    // 上記に加えて再生まで行うヘルパー
+    auto playAudioSource = [audioPlayer, setAudioSource](const QString &filePath) {
+        setAudioSource(filePath);
+        audioPlayer->play();
+    };
+
+    // 音声ファイル生成完了通知（リストへの追加 + 自動再生）
     QObject::connect(logic, &MainLogic::ttsFileCreated, &mainWindow,
                      &MainWindow::appendTtsOutput);
+    QObject::connect(logic, &MainLogic::ttsFileCreated, audioPlayer,
+                     playAudioSource);
 
-    // 音声ファイルが選択された
-    QObject::connect(&mainWindow, &MainWindow::ttsFileSelected, logic,
-                     &MainLogic::onTtsFileSelected);
-    QObject::connect(&mainWindow, &MainWindow::ttsFileActivated, logic,
-                     &MainLogic::onTtsFileActivated);
-
-    QObject::connect(logic, &MainLogic::mediaSourceChanged, audioPlayer,
-                     &QMediaPlayer::setSource);
-    QObject::connect(logic, &MainLogic::requestedToPlay, audioPlayer,
-                     &QMediaPlayer::play);
+    // 音声ファイルが選択された／アクティベートされた
+    QObject::connect(&mainWindow, &MainWindow::ttsFileSelected, audioPlayer,
+                     setAudioSource);
+    QObject::connect(&mainWindow, &MainWindow::ttsFileActivated, audioPlayer,
+                     playAudioSource);
 
     // オーディオプレイヤー状態同期
     QObject::connect(audioPlayer, &QMediaPlayer::playingChanged, &mainWindow,

@@ -47,19 +47,4 @@ void MainLogic::onReplyReceived(QString const &reply) {
 
 void MainLogic::onSynthesizeCompleted(const QString &filePath) {
     emit ttsFileCreated(filePath);
-
-    QUrl url = QUrl::fromLocalFile(filePath);
-    emit mediaSourceChanged(url);
-    emit requestedToPlay();
-}
-
-void MainLogic::onTtsFileSelected(const QString &filePath) {
-    QUrl url = QUrl::fromLocalFile(filePath);
-    emit mediaSourceChanged(url);
-}
-
-void MainLogic::onTtsFileActivated(const QString &filePath) {
-    QUrl url = QUrl::fromLocalFile(filePath);
-    emit mediaSourceChanged(url);
-    emit requestedToPlay();
 }
