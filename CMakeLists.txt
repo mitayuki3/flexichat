@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Qt 6.7+ is required (QCheckBox::checkStateChanged, etc.)
 find_package(Qt6 6.7 REQUIRED COMPONENTS
-    Widgets Gui Network LinguistTools Multimedia MultimediaWidgets)
+    Widgets Gui Network LinguistTools Multimedia)
 
 set(PROJECT_SOURCES
     src/AppSettings.cpp
@@ -44,8 +44,7 @@ target_link_libraries(FlexiChat PRIVATE
     Qt6::Widgets
     Qt6::Gui
     Qt6::Network
-    Qt6::Multimedia
-    Qt6::MultimediaWidgets)
+    Qt6::Multimedia)
 
 set_target_properties(FlexiChat PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
