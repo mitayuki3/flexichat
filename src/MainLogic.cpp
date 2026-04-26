@@ -39,10 +39,12 @@ void MainLogic::synthesize(QString const &text) {
 }
 
 void MainLogic::synthesizeMultiple(QStringList const &list) {
-    if (list.isEmpty()) {
-        return;
+    // OpenAITTSClient 側がキュー処理するので、空でないテキストを順に積むだけ
+    for (QString const &text : list) {
+        if (!text.isEmpty()) {
+            m_ttsClient->synthesize(text);
+        }
     }
-    m_ttsClient->synthesizeMultiple(list);
 }
 
 void MainLogic::onReplyReceived(QString const &reply) {

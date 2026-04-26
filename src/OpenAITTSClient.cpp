@@ -74,32 +74,6 @@ void OpenAITTSClient::synthesize(const QString &text) {
 }
 
 /**
- * @brief 複数テキストをキューに積み、先頭から順に1つずつ合成する
- * 既存の合成中リクエストはキャンセルせず、終了後に続けて処理する。
- * @param list 音声化するテキストのリスト
- */
-void OpenAITTSClient::synthesizeMultiple(const QStringList &list) {
-    QStringList filtered;
-    filtered.reserve(list.size());
-    for (const QString &s : list) {
-        if (!s.isEmpty()) {
-            filtered.append(s);
-        }
-    }
-    if (filtered.isEmpty()) {
-        emit errorOccurred("音声化するテキストが空です");
-        return;
-    }
-
-    m_queue.append(filtered);
-
-    // 合成中でなければ先頭を取り出して開始
-    if (m_currentReply == nullptr) {
-        processNext();
-    }
-}
-
-/**
  * @brief リクエストを停止し、キューもクリア
  */
 void OpenAITTSClient::stop() {

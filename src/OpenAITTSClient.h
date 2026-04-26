@@ -16,7 +16,6 @@ public:
     ~OpenAITTSClient() override;
 
     void synthesize(const QString &text);
-    void synthesizeMultiple(const QStringList &list);
     void stop();
     void setBaseUrl(const QString &url);
     void setApiKey(const QString &key);
