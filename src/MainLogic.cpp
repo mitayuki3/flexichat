@@ -38,6 +38,13 @@ void MainLogic::synthesize(QString const &text) {
     m_ttsClient->synthesize(text);
 }
 
+void MainLogic::synthesizeMultiple(QStringList const &list) {
+    if (list.isEmpty()) {
+        return;
+    }
+    m_ttsClient->synthesizeMultiple(list);
+}
+
 void MainLogic::onReplyReceived(QString const &reply) {
     // 自動再生する
     if (m_autoPlay) {

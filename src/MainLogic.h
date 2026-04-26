@@ -2,6 +2,7 @@
 #define MAINLOGIC_H
 
 #include <QObject>
+#include <QStringList>
 
 struct TtsSettingsData;
 class OpenAITTSClient;
@@ -18,6 +19,7 @@ signals:
 public slots:
     void updateSettings(TtsSettingsData const &data);
     void synthesize(QString const &text);
+    void synthesizeMultiple(QStringList const &list);
     void onReplyReceived(QString const &reply);
     void onSynthesizeCompleted(const QString &filePath);
 
