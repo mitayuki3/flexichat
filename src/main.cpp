@@ -43,7 +43,8 @@ int main(int argc, char *argv[]) {
     QMediaDevices *mediaDevices = new QMediaDevices(&app);
     QObject::connect(mediaDevices, &QMediaDevices::audioOutputsChanged,
                      audioOutput, [audioOutput]() {
-        QAudioDevice defaultDevice = QMediaDevices::defaultAudioOutput();
+        QAudioDevice defaultDevice =
+            QMediaDevices::defaultAudioOutput();
         if (audioOutput->device() != defaultDevice) {
             audioOutput->setDevice(defaultDevice);
         }
