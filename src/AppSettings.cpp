@@ -1,7 +1,4 @@
 #include "AppSettings.h"
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 
 const QString AppSettings::KEY_PROFILES = "Profiles/Data";
 const QString AppSettings::KEY_ACTIVE_PROFILE = "General/ActiveProfileId";
@@ -30,47 +27,11 @@ AppSettings::AppSettings(QObject *parent)
                  "FlexiChat", "FlexiChat") {}
 
 void AppSettings::saveProfiles(const QList<SystemPromptProfile> &profiles) {
-    QJsonArray arr;
-    for (const auto &p : profiles) {
-        QJsonObject obj;
-        obj["id"] = p.id;
-        obj["name"] = p.name;
-        obj["icon"] = p.icon;
-        obj["prompt"] = p.prompt;
-        obj["temperature"] = p.temperature;
-        obj["maxTokens"] = p.maxTokens;
-        arr.append(obj);
-    }
-    m_settings.setValue(
-        KEY_PROFILES, QString(QJsonDocument(arr).toJson(QJsonDocument::Compact)));
+    m_settings.setValue(KEY_PROFILES, QVariant::fromValue(profiles));
 }
 
 QList<SystemPromptProfile> AppSettings::loadProfiles() const {
-    QList<SystemPromptProfile> profiles;
-
-    QString data = m_settings.value(KEY_PROFILES).toString();
-    if (data.isEmpty()) {
-        return profiles;
-    }
-
-    QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
-    if (!doc.isArray()) {
-        return profiles;
-    }
-
-    for (const auto &val : doc.array()) {
-        QJsonObject obj = val.toObject();
-        SystemPromptProfile p;
-        p.id = obj["id"].toString();
-        p.name = obj["name"].toString();
-        p.icon = obj["icon"].toString();
-        p.prompt = obj["prompt"].toString();
-        p.temperature = obj["temperature"].toDouble(0.7);
-        p.maxTokens = obj["maxTokens"].toInt(2048);
-        profiles.append(p);
-    }
-
-    return profiles;
+    return m_settings.value(KEY_PROFILES).value<QList<SystemPromptProfile>>();
 }
 
 void AppSettings::saveActiveProfileId(const QString &id) {

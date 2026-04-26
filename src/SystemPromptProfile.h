@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QMetaType>
 
 struct SystemPromptProfile {
     QString id;
@@ -39,3 +40,18 @@ struct SystemPromptProfile {
         return p;
     }
 };
+
+// QDataStream serialization support
+inline QDataStream &operator<<(QDataStream &out, const SystemPromptProfile &profile) {
+    out << profile.id << profile.name << profile.icon << profile.prompt 
+        << profile.temperature << profile.maxTokens;
+    return out;
+}
+
+inline QDataStream &operator>>(QDataStream &in, SystemPromptProfile &profile) {
+    in >> profile.id >> profile.name >> profile.icon >> profile.prompt 
+       >> profile.temperature >> profile.maxTokens;
+    return in;
+}
+
+Q_DECLARE_METATYPE(SystemPromptProfile)
