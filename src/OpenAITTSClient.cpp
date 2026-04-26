@@ -56,7 +56,7 @@ OpenAITTSClient::~OpenAITTSClient() { stop(); }
 
 /**
  * @brief テキストを音声に変換してファイルに保存
- * 単発合成。実行中のリクエストおよびキューに残っている合成要求はキャンセルされる。
+ * 既存の合成中リクエストはキャンセルせず、キュー末尾に積んで終了後に処理する。
  * @param text 音声化するテキスト
  */
 void OpenAITTSClient::synthesize(const QString &text) {
@@ -65,10 +65,12 @@ void OpenAITTSClient::synthesize(const QString &text) {
         return;
     }
 
-    // 以前のリクエスト・キューがあれば破棄
-    stop();
+    m_queue.append(text);
 
-    startRequest(text);
+    // 合成中でなければ先頭を取り出して開始
+    if (m_currentReply == nullptr) {
+        processNext();
+    }
 }
 
 /**
