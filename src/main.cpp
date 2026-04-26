@@ -5,8 +5,10 @@
 #include "ProfileManager.h"
 #include "SettingsDialog.h"
 #include <QApplication>
+#include <QAudioDevice>
 #include <QAudioOutput>
 #include <QFont>
+#include <QMediaDevices>
 #include <QMediaPlayer>
 #include <QScopedPointer>
 #include <QThread>
@@ -36,6 +38,16 @@ int main(int argc, char *argv[]) {
     QMediaPlayer *audioPlayer = new QMediaPlayer(&app);
     QAudioOutput *audioOutput = new QAudioOutput(audioPlayer);
     audioPlayer->setAudioOutput(audioOutput);
+
+    // オーディオデバイス変更の監視
+    QMediaDevices *mediaDevices = new QMediaDevices(&app);
+    QObject::connect(mediaDevices, &QMediaDevices::audioOutputsChanged,
+                     audioOutput, [audioOutput]() {
+        QAudioDevice defaultDevice = QMediaDevices::defaultAudioOutput();
+        if (audioOutput->device() != defaultDevice) {
+            audioOutput->setDevice(defaultDevice);
+        }
+    });
 
     // プロファイルマネージャーの作成
     QScopedPointer<ProfileManager> profileManager(new ProfileManager(settings));
