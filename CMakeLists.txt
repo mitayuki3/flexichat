@@ -8,67 +8,45 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS
+# Qt 6.7+ is required (QCheckBox::checkStateChanged, etc.)
+find_package(Qt6 6.7 REQUIRED COMPONENTS
     Widgets Gui Network LinguistTools Multimedia)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
-    Widgets Gui Network LinguistTools Multimedia MultimediaWidgets)
 
 set(PROJECT_SOURCES
     src/AppSettings.cpp
+    src/AppSettings.h
     src/LMStudioClient.cpp
+    src/LMStudioClient.h
     src/main.cpp
     src/MainLogic.cpp
     src/MainLogic.h
     src/MainWindow.cpp
+    src/MainWindow.h
     src/MainWindow.ui
     src/OpenAITTSClient.cpp
+    src/OpenAITTSClient.h
     src/ProfileManager.cpp
+    src/ProfileManager.h
     src/SettingsDialog.cpp
+    src/SettingsDialog.h
     src/SettingsDialog.ui
+    src/SystemPromptProfile.h
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(FlexiChat
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-    )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET FlexiChat APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
+qt_add_executable(FlexiChat
+    MANUAL_FINALIZATION
+    ${PROJECT_SOURCES}
+)
 
-    qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-else()
-    if(ANDROID)
-        add_library(FlexiChat SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(FlexiChat
-            ${PROJECT_SOURCES}
-        )
-    endif()
-
-    qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-endif()
+qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
 target_link_libraries(FlexiChat PRIVATE
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::Gui
-    Qt${QT_VERSION_MAJOR}::Network
-    Qt${QT_VERSION_MAJOR}::Multimedia
-    Qt${QT_VERSION_MAJOR}::MultimediaWidgets)
+    Qt6::Widgets
+    Qt6::Gui
+    Qt6::Network
+    Qt6::Multimedia)
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
-if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.FlexiChat)
-endif()
 set_target_properties(FlexiChat PROPERTIES
-    ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
@@ -82,6 +60,4 @@ install(TARGETS FlexiChat
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(FlexiChat)
-endif()
+qt_finalize_executable(FlexiChat)
