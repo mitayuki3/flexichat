@@ -5,6 +5,7 @@
 #include <QNetworkReply>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QUrl>
 
 class OpenAITTSClient : public QObject {
@@ -42,6 +43,10 @@ private:
     QString m_instructions;
     QString m_format;
     QString m_outputDir;
+    QStringList m_queue;
 
     QString generateFilePath(const QString &format) const;
+    void startRequest(const QString &text);
+    void abortCurrent();
+    void processNext();
 };

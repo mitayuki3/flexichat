@@ -42,6 +42,7 @@ signals:
     void profileChangeRequested(const QString &profileId);
     void openSettingsRequested();
     void synthesizeRequested(const QString &text);
+    void synthesizeMultipleRequested(QStringList const &list);
     void autoplayChanged(bool checked);
     void voiceChanged(const QString &voice);
     void ttsPlayRequested();

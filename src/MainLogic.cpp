@@ -38,6 +38,15 @@ void MainLogic::synthesize(QString const &text) {
     m_ttsClient->synthesize(text);
 }
 
+void MainLogic::synthesizeMultiple(QStringList const &list) {
+    // OpenAITTSClient 側がキュー処理するので、空でないテキストを順に積むだけ
+    for (QString const &text : list) {
+        if (!text.isEmpty()) {
+            m_ttsClient->synthesize(text);
+        }
+    }
+}
+
 void MainLogic::onReplyReceived(QString const &reply) {
     // 自動再生する
     if (m_autoPlay) {

@@ -56,6 +56,7 @@ OpenAITTSClient::~OpenAITTSClient() { stop(); }
 
 /**
  * @brief テキストを音声に変換してファイルに保存
+ * 既存の合成中リクエストはキャンセルせず、キュー末尾に積んで終了後に処理する。
  * @param text 音声化するテキスト
  */
 void OpenAITTSClient::synthesize(const QString &text) {
@@ -64,9 +65,53 @@ void OpenAITTSClient::synthesize(const QString &text) {
         return;
     }
 
-    // 以前のリクエストがあれば停止
-    stop();
+    m_queue.append(text);
 
+    // 合成中でなければ先頭を取り出して開始
+    if (m_currentReply == nullptr) {
+        processNext();
+    }
+}
+
+/**
+ * @brief リクエストを停止し、キューもクリア
+ */
+void OpenAITTSClient::stop() {
+    m_queue.clear();
+    abortCurrent();
+}
+
+/**
+ * @brief 実行中のリクエストを中断（キューには触らない）
+ */
+void OpenAITTSClient::abortCurrent() {
+    if (m_currentReply) {
+        // abort() は finished シグナルを同期的に発火することがあり、
+        // onSynthesizeFinished 内で m_currentReply が nullptr にリセットされる。
+        // そのためローカルに退避してから abort/deleteLater を呼ぶ。
+        QNetworkReply *reply = m_currentReply;
+        m_currentReply = nullptr;
+        reply->abort();
+        reply->deleteLater();
+    }
+}
+
+/**
+ * @brief キュー先頭のテキストを取り出して合成を開始
+ */
+void OpenAITTSClient::processNext() {
+    if (m_queue.isEmpty()) {
+        return;
+    }
+    QString next = m_queue.takeFirst();
+    startRequest(next);
+}
+
+/**
+ * @brief HTTP リクエストを実際に送出する
+ * @param text 音声化するテキスト
+ */
+void OpenAITTSClient::startRequest(const QString &text) {
     auto url = QUrl(m_baseUrl + DEFAULT_TTS_ENDPOINT);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -99,21 +144,6 @@ void OpenAITTSClient::synthesize(const QString &text) {
     emit statusChanged("音声合成中...");
 
     m_currentReply = m_networkManager->post(request, postData);
-}
-
-/**
- * @brief リクエストを停止
- */
-void OpenAITTSClient::stop() {
-    if (m_currentReply) {
-        // abort() は finished シグナルを同期的に発火することがあり、
-        // onSynthesizeFinished 内で m_currentReply が nullptr にリセットされる。
-        // そのためローカルに退避してから abort/deleteLater を呼ぶ。
-        QNetworkReply *reply = m_currentReply;
-        m_currentReply = nullptr;
-        reply->abort();
-        reply->deleteLater();
-    }
 }
 
 /**
@@ -204,6 +234,8 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
         emit errorOccurred("TTS エラー：" + errorMsg);
         qDebug() << "TTS response body:" << QString::fromUtf8(reply->readAll());
         reply->deleteLater();
+        // エラーしてもキューの残りは続けて処理する
+        processNext();
         return;
     }
 
@@ -216,6 +248,7 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
         }
         emit errorOccurred("音声データが受信できません");
         reply->deleteLater();
+        processNext();
         return;
     }
 
@@ -231,6 +264,7 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
         emit errorOccurred("音声ファイルを保存できません: " + filePath);
+        processNext();
         return;
     }
 
@@ -239,4 +273,7 @@ void OpenAITTSClient::onSynthesizeFinished(QNetworkReply *reply) {
 
     emit synthesizeCompleted(filePath);
     emit statusChanged("音声合成完了: " + filePath);
+
+    // キューに残りがあれば次を処理
+    processNext();
 }

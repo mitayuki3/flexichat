@@ -151,11 +151,31 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="ttsGenerateButton">
-            <property name="text">
-             <string>合成</string>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QCheckBox" name="forEachLineCheckBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>1行ずつ</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="ttsGenerateButton">
+              <property name="text">
+               <string>合成</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <layout class="QFormLayout" name="formLayout">

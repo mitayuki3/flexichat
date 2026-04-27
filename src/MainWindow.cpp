@@ -290,7 +290,18 @@ void MainWindow::generateTtsSpeech() {
         onErrorOccurred("TTS 入力が空です。テキストを入力してください");
         return;
     }
-    emit synthesizeRequested(m_pendingTtsText);
+    if (ui->forEachLineCheckBox->isChecked()) {
+        QStringList list = m_pendingTtsText.split("\n");
+        // 前後の空白を除去する
+        for (QString &s : list) {
+            s = s.trimmed();
+        }
+        // 空文字列を除去する
+        list.removeAll(QString());
+        emit synthesizeMultipleRequested(list);
+    } else {
+        emit synthesizeRequested(m_pendingTtsText);
+    }
 }
 
 /**
