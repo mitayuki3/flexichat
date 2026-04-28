@@ -99,9 +99,8 @@ void MainWindow::connectSignals() {
     connect(ui->profileTemperatureSpin,
             QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
             [this](double) { commitProfileEdits(); });
-    connect(ui->profileMaxTokensSpin,
-            QOverload<int>::of(&QSpinBox::valueChanged), this,
-            [this](int) { commitProfileEdits(); });
+    connect(ui->profileMaxTokensSpin, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, [this](int) { commitProfileEdits(); });
 }
 
 /**
