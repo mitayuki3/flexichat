@@ -3,7 +3,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-const QString AppSettings::KEY_PROFILES = "Profiles/Data";
+const QString AppSettings::KEY_PROFILES = "Profiles";
+const QString AppSettings::KEY_PROFILES_LEGACY = "Profiles/Data";
 const QString AppSettings::KEY_ACTIVE_PROFILE = "General/ActiveProfileId";
 const QString AppSettings::KEY_API_BASE_URL = "General/ApiBaseUrl";
 const QString AppSettings::KEY_TTS_API_KEY = "Tts/ApiKey";
@@ -30,29 +31,51 @@ AppSettings::AppSettings(QObject *parent)
                  "FlexiChat", "FlexiChat") {}
 
 void AppSettings::saveProfiles(const QList<SystemPromptProfile> &profiles) {
-    QJsonArray arr;
-    for (const auto &p : profiles) {
-        QJsonObject obj;
-        obj["id"] = p.id;
-        obj["name"] = p.name;
-        obj["prompt"] = p.prompt;
-        obj["temperature"] = p.temperature;
-        obj["maxTokens"] = p.maxTokens;
-        arr.append(obj);
+    m_settings.beginWriteArray(KEY_PROFILES, profiles.size());
+    for (int i = 0; i < profiles.size(); ++i) {
+        const auto &p = profiles.at(i);
+        m_settings.setArrayIndex(i);
+        m_settings.setValue("id", p.id);
+        m_settings.setValue("name", p.name);
+        m_settings.setValue("prompt", p.prompt);
+        m_settings.setValue("temperature", p.temperature);
+        m_settings.setValue("maxTokens", p.maxTokens);
     }
-    m_settings.setValue(
-        KEY_PROFILES, QString(QJsonDocument(arr).toJson(QJsonDocument::Compact)));
+    m_settings.endArray();
+
+    // 旧 JSON 形式のキーが残っていれば削除する
+    if (m_settings.contains(KEY_PROFILES_LEGACY)) {
+        m_settings.remove(KEY_PROFILES_LEGACY);
+    }
 }
 
 QList<SystemPromptProfile> AppSettings::loadProfiles() const {
     QList<SystemPromptProfile> profiles;
 
-    QString data = m_settings.value(KEY_PROFILES).toString();
-    if (data.isEmpty()) {
+    int size = m_settings.beginReadArray(KEY_PROFILES);
+    for (int i = 0; i < size; ++i) {
+        m_settings.setArrayIndex(i);
+        SystemPromptProfile p;
+        p.id = m_settings.value("id").toString();
+        p.name = m_settings.value("name").toString();
+        p.prompt = m_settings.value("prompt").toString();
+        p.temperature = m_settings.value("temperature", 0.7).toDouble();
+        p.maxTokens = m_settings.value("maxTokens", 2048).toInt();
+        profiles.append(p);
+    }
+    m_settings.endArray();
+
+    if (!profiles.isEmpty()) {
         return profiles;
     }
 
-    QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
+    // 旧 JSON 形式 (Profiles/Data) からの読み込みフォールバック
+    QString legacy = m_settings.value(KEY_PROFILES_LEGACY).toString();
+    if (legacy.isEmpty()) {
+        return profiles;
+    }
+
+    QJsonDocument doc = QJsonDocument::fromJson(legacy.toUtf8());
     if (!doc.isArray()) {
         return profiles;
     }

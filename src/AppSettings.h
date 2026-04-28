@@ -58,9 +58,10 @@ signals:
     void changedTts(TtsSettingsData const &data);
 
 private:
-    QSettings m_settings;
+    mutable QSettings m_settings;
 
     static const QString KEY_PROFILES;
+    static const QString KEY_PROFILES_LEGACY;
     static const QString KEY_ACTIVE_PROFILE;
     static const QString KEY_API_BASE_URL;
     static const QString KEY_TTS_API_KEY;
