@@ -3,6 +3,7 @@
 #include <QComboBox>
 #include <QMainWindow>
 #include <QStringListModel>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -57,6 +58,7 @@ private slots:
     void generateTtsSpeech();
     void onTtsListRowChanged(int row);
     void onTtsListActivated(const QModelIndex &index);
+    void scheduleProfileCommit();
     void commitProfileEdits();
 
 private:
@@ -66,6 +68,7 @@ private:
     QString m_lastAssistantMessage;
     QString m_pendingTtsText;
     QString m_displayedProfileId;
+    QTimer *m_profileCommitTimer;
     bool m_loadingProfileFields = false;
     bool m_committingFromEditor = false;
 

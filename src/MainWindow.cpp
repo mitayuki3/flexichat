@@ -18,8 +18,15 @@
 MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
     m_profileManager(profileManager), m_model(new QStringListModel(this)),
-    m_lastAssistantMessage(""), m_pendingTtsText("") {
+    m_lastAssistantMessage(""), m_pendingTtsText(""),
+    m_profileCommitTimer(new QTimer(this)) {
     ui->setupUi(this);
+
+    // プロファイル編集の保存をデバウンスするタイマー
+    m_profileCommitTimer->setSingleShot(true);
+    m_profileCommitTimer->setInterval(600);
+    connect(m_profileCommitTimer, &QTimer::timeout, this,
+            &MainWindow::commitProfileEdits);
 
     // モデルのセットアップ
     ui->chatDisplay->setModel(m_model);
@@ -34,8 +41,15 @@ MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
 
 /**
  * @brief デストラクタ
+ * 終了前に未保存のプロファイル編集をフラッシュする
  */
-MainWindow::~MainWindow() { delete ui; }
+MainWindow::~MainWindow() {
+    if (m_profileCommitTimer->isActive()) {
+        m_profileCommitTimer->stop();
+        commitProfileEdits();
+    }
+    delete ui;
+}
 
 /**
  * @brief シグナル接続の設定
@@ -92,15 +106,21 @@ void MainWindow::connectSignals() {
             &MainWindow::onTtsListActivated);
 
     // プロファイル設定エディタ
+    // editingFinished（フォーカスアウト / Enter）では即時保存し、
+    // それ以外（連続するクリックや入力）はタイマーでデバウンス保存する
     connect(ui->profileNameEdit, &QLineEdit::editingFinished, this,
             &MainWindow::commitProfileEdits);
     connect(ui->profilePromptEdit, &QPlainTextEdit::textChanged, this,
-            &MainWindow::commitProfileEdits);
+            &MainWindow::scheduleProfileCommit);
     connect(ui->profileTemperatureSpin,
             QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
-            [this](double) { commitProfileEdits(); });
+            [this](double) { scheduleProfileCommit(); });
+    connect(ui->profileTemperatureSpin, &QDoubleSpinBox::editingFinished, this,
+            &MainWindow::commitProfileEdits);
     connect(ui->profileMaxTokensSpin, QOverload<int>::of(&QSpinBox::valueChanged),
-            this, [this](int) { commitProfileEdits(); });
+            this, [this](int) { scheduleProfileCommit(); });
+    connect(ui->profileMaxTokensSpin, &QSpinBox::editingFinished, this,
+            &MainWindow::commitProfileEdits);
 }
 
 /**
@@ -161,8 +181,13 @@ void MainWindow::onProfileListChanged() { populateProfileCombo(); }
 
 /**
  * @brief プロファイルの内容をエディタに読み込む
+ * 現在表示中のプロファイルに未保存の編集があれば先にフラッシュする
  */
 void MainWindow::loadProfileIntoEditor(const SystemPromptProfile &profile) {
+    if (m_profileCommitTimer->isActive()) {
+        m_profileCommitTimer->stop();
+        commitProfileEdits();
+    }
     m_loadingProfileFields = true;
     m_displayedProfileId = profile.id;
     ui->profileNameEdit->setText(profile.name);
@@ -174,9 +199,21 @@ void MainWindow::loadProfileIntoEditor(const SystemPromptProfile &profile) {
 }
 
 /**
+ * @brief 編集の保存をデバウンスする
+ */
+void MainWindow::scheduleProfileCommit() {
+    if (m_loadingProfileFields || m_displayedProfileId.isEmpty()) {
+        return;
+    }
+    m_profileCommitTimer->start();
+}
+
+/**
  * @brief エディタの内容をプロファイルに反映する
+ * 保留中のタイマーがあれば停止する（即時フラッシュ）
  */
 void MainWindow::commitProfileEdits() {
+    m_profileCommitTimer->stop();
     if (m_loadingProfileFields || m_displayedProfileId.isEmpty()) {
         return;
     }
