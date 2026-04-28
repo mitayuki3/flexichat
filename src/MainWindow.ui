@@ -122,7 +122,7 @@
           <item row="0" column="0">
            <widget class="QLabel" name="profileLabel">
             <property name="text">
-             <string>テキスト</string>
+             <string>プロファイル</string>
             </property>
            </widget>
           </item>
@@ -130,6 +130,106 @@
            <widget class="QComboBox" name="profileCombo"/>
           </item>
          </layout>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="profileSettingsGroupBox">
+          <property name="title">
+           <string>プロファイル設定</string>
+          </property>
+          <layout class="QFormLayout" name="profileSettingsFormLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="profileNameLabel">
+             <property name="text">
+              <string>名前:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <layout class="QHBoxLayout" name="profileNameLayout">
+             <item>
+              <widget class="QLineEdit" name="profileIconEdit">
+               <property name="maximumWidth">
+                <number>48</number>
+               </property>
+               <property name="placeholderText">
+                <string>💬</string>
+               </property>
+               <property name="toolTip">
+                <string>アイコン</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="profileNameEdit">
+               <property name="placeholderText">
+                <string>プロファイル名</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="profilePromptLabel">
+             <property name="text">
+              <string>プロンプト:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPlainTextEdit" name="profilePromptEdit">
+             <property name="maximumHeight">
+              <number>100</number>
+             </property>
+             <property name="placeholderText">
+              <string>システムプロンプトを入力...</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="profileTemperatureLabel">
+             <property name="text">
+              <string>Temperature:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QDoubleSpinBox" name="profileTemperatureSpin">
+             <property name="maximum">
+              <double>2.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.700000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="profileMaxTokensLabel">
+             <property name="text">
+              <string>Max Tokens:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="profileMaxTokensSpin">
+             <property name="minimum">
+              <number>64</number>
+             </property>
+             <property name="maximum">
+              <number>16384</number>
+             </property>
+             <property name="singleStep">
+              <number>128</number>
+             </property>
+             <property name="value">
+              <number>2048</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
       </widget>

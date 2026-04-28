@@ -57,6 +57,7 @@ private slots:
     void generateTtsSpeech();
     void onTtsListRowChanged(int row);
     void onTtsListActivated(const QModelIndex &index);
+    void commitProfileEdits();
 
 private:
     Ui::MainWindow *ui;
@@ -64,9 +65,13 @@ private:
     QStringListModel *m_model;
     QString m_lastAssistantMessage;
     QString m_pendingTtsText;
+    QString m_displayedProfileId;
+    bool m_loadingProfileFields = false;
+    bool m_committingFromEditor = false;
 
     void setupUI();
     void connectSignals();
     void appendMessage(const QString &role, const QString &message);
     void populateProfileCombo();
+    void loadProfileIntoEditor(const SystemPromptProfile &profile);
 };

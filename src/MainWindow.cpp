@@ -3,8 +3,12 @@
 #include "SettingsDialog.h"
 #include "ui_MainWindow.h"
 #include <QComboBox>
+#include <QDoubleSpinBox>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMessageBox>
+#include <QPlainTextEdit>
+#include <QSpinBox>
 
 /**
  * @brief コンストラクタ
@@ -86,6 +90,20 @@ void MainWindow::connectSignals() {
             &MainWindow::onTtsListRowChanged);
     connect(ui->ttsListWidget, &QListWidget::activated, this,
             &MainWindow::onTtsListActivated);
+
+    // プロファイル設定エディタ
+    connect(ui->profileNameEdit, &QLineEdit::editingFinished, this,
+            &MainWindow::commitProfileEdits);
+    connect(ui->profileIconEdit, &QLineEdit::editingFinished, this,
+            &MainWindow::commitProfileEdits);
+    connect(ui->profilePromptEdit, &QPlainTextEdit::textChanged, this,
+            &MainWindow::commitProfileEdits);
+    connect(ui->profileTemperatureSpin,
+            QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            [this](double) { commitProfileEdits(); });
+    connect(ui->profileMaxTokensSpin,
+            QOverload<int>::of(&QSpinBox::valueChanged), this,
+            [this](int) { commitProfileEdits(); });
 }
 
 /**
@@ -127,8 +145,12 @@ void MainWindow::onProfileComboActivated(int index) {
  * @brief プロファイル変更時の処理
  */
 void MainWindow::onProfileChanged(const SystemPromptProfile &profile) {
-    Q_UNUSED(profile);
     populateProfileCombo();
+    // 自身の編集による更新ではエディタを再読み込みしない
+    // それ以外（プロファイル切替や外部編集）ではエディタを同期する
+    if (!m_committingFromEditor) {
+        loadProfileIntoEditor(profile);
+    }
     emit profileChangeRequested(m_profileManager->getActiveProfileId());
     ui->statusbar->showMessage(
         "プロファイル: " + m_profileManager->getActiveProfile().displayName(),
@@ -139,6 +161,58 @@ void MainWindow::onProfileChanged(const SystemPromptProfile &profile) {
  * @brief プロファイルリスト変更時の処理
  */
 void MainWindow::onProfileListChanged() { populateProfileCombo(); }
+
+/**
+ * @brief プロファイルの内容をエディタに読み込む
+ */
+void MainWindow::loadProfileIntoEditor(const SystemPromptProfile &profile) {
+    m_loadingProfileFields = true;
+    m_displayedProfileId = profile.id;
+    ui->profileNameEdit->setText(profile.name);
+    ui->profileIconEdit->setText(profile.icon);
+    ui->profilePromptEdit->setPlainText(profile.prompt);
+    ui->profileTemperatureSpin->setValue(profile.temperature);
+    ui->profileMaxTokensSpin->setValue(profile.maxTokens);
+    ui->profileSettingsGroupBox->setEnabled(!profile.id.isEmpty());
+    m_loadingProfileFields = false;
+}
+
+/**
+ * @brief エディタの内容をプロファイルに反映する
+ */
+void MainWindow::commitProfileEdits() {
+    if (m_loadingProfileFields || m_displayedProfileId.isEmpty()) {
+        return;
+    }
+    auto *current = m_profileManager->getProfileById(m_displayedProfileId);
+    if (!current) {
+        return;
+    }
+
+    SystemPromptProfile updated = *current;
+    QString name = ui->profileNameEdit->text().trimmed();
+    if (name.isEmpty()) {
+        // 空の名前は保存しない（既存名を保持）
+        ui->profileNameEdit->setText(updated.name);
+    } else {
+        updated.name = name;
+    }
+    updated.icon = ui->profileIconEdit->text().trimmed();
+    updated.prompt = ui->profilePromptEdit->toPlainText();
+    updated.temperature = ui->profileTemperatureSpin->value();
+    updated.maxTokens = ui->profileMaxTokensSpin->value();
+
+    if (updated.name == current->name && updated.icon == current->icon &&
+        updated.prompt == current->prompt &&
+        qFuzzyCompare(updated.temperature, current->temperature) &&
+        updated.maxTokens == current->maxTokens) {
+        return;
+    }
+
+    m_committingFromEditor = true;
+    m_profileManager->updateProfile(updated);
+    m_committingFromEditor = false;
+}
 
 /**
  * @brief 送信ボタンがクリックされたときの処理
@@ -217,6 +291,9 @@ void MainWindow::setupUI() {
 
     // 保存された自動再生設定をチェックボックスに反映
     ui->autoplayCheckBox->setChecked(m_profileManager->getTtsAutoPlay());
+
+    // プロファイル設定エディタにアクティブプロファイルを読み込み
+    loadProfileIntoEditor(m_profileManager->getActiveProfile());
 }
 
 /**
