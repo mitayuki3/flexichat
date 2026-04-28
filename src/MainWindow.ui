@@ -48,6 +48,12 @@
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QListView" name="chatDisplay">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
           <property name="editTriggers">
            <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
           </property>
@@ -122,7 +128,7 @@
           <item row="0" column="0">
            <widget class="QLabel" name="profileLabel">
             <property name="text">
-             <string>テキスト</string>
+             <string>プロファイル</string>
             </property>
            </widget>
           </item>
@@ -130,6 +136,104 @@
            <widget class="QComboBox" name="profileCombo"/>
           </item>
          </layout>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="profileSettingsGroupBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>プロファイル設定</string>
+          </property>
+          <layout class="QFormLayout" name="profileSettingsFormLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="profileNameLabel">
+             <property name="text">
+              <string>名前:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="profileNameEdit">
+             <property name="placeholderText">
+              <string>プロファイル名</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="profilePromptLabel">
+             <property name="text">
+              <string>プロンプト:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPlainTextEdit" name="profilePromptEdit">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>1</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="placeholderText">
+              <string>システムプロンプトを入力...</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="profileTemperatureLabel">
+             <property name="text">
+              <string>Temperature:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QDoubleSpinBox" name="profileTemperatureSpin">
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+             <property name="maximum">
+              <double>2.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.700000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="profileMaxTokensLabel">
+             <property name="text">
+              <string>Max Tokens:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="profileMaxTokensSpin">
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+             <property name="minimum">
+              <number>64</number>
+             </property>
+             <property name="maximum">
+              <number>16384</number>
+             </property>
+             <property name="singleStep">
+              <number>128</number>
+             </property>
+             <property name="value">
+              <number>2048</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -142,6 +246,12 @@
          <layout class="QVBoxLayout" name="ttsInputLayout">
           <item>
            <widget class="QPlainTextEdit" name="ttsTextEdit">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>2</verstretch>
+             </sizepolicy>
+            </property>
             <property name="plainText">
              <string>これは AI 合成音声です</string>
             </property>
@@ -178,43 +288,63 @@
            </layout>
           </item>
           <item>
-           <layout class="QFormLayout" name="formLayout">
-            <item row="1" column="0">
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>モデル</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QListWidget" name="ttsModelListWidget">
-              <item>
+           <widget class="QWidget" name="ttsParametersWidget" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>1</verstretch>
+             </sizepolicy>
+            </property>
+            <layout class="QFormLayout" name="formLayout">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="1" column="1">
+              <widget class="QListWidget" name="ttsModelListWidget">
+               <item>
+                <property name="text">
+                 <string>irodori-tts-500m-v2</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>irodori-tts-500m-v2-voicedesign</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_2">
                <property name="text">
-                <string>irodori-tts-500m-v2</string>
+                <string>ボイス</string>
                </property>
-              </item>
-              <item>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QComboBox" name="ttsVoiceCombo">
+               <property name="editable">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label">
                <property name="text">
-                <string>irodori-tts-500m-v2-voicedesign</string>
+                <string>モデル</string>
                </property>
-              </item>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>ボイス</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QComboBox" name="ttsVoiceCombo">
-              <property name="editable">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </item>
          </layout>
         </item>
