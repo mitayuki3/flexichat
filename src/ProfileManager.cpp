@@ -141,18 +141,18 @@ void ProfileManager::saveTtsVoice(const QString &voice) {
 }
 
 QList<SystemPromptProfile> ProfileManager::builtInDefaults() {
-    return {SystemPromptProfile::createDefault("general", "一般", "💬"),
+    return {SystemPromptProfile::createDefault("general", "一般"),
             SystemPromptProfile::createDefault(
-                "coding", "コーディング", "💻",
+                "coding", "コーディング",
                 "You are an expert programming assistant. Provide clear, "
                 "well-commented code. "
                 "Explain your reasoning step by step."),
             SystemPromptProfile::createDefault(
-                "translate", "翻訳", "🌐",
+                "translate", "翻訳",
                 "あなたは優秀な翻訳アシスタントです。与えられたテキストを正確に、"
                 "自然な日本語に翻訳してください。"),
             SystemPromptProfile::createDefault(
-                "summarize", "要約", "📋",
+                "summarize", "要約",
                 "Provide concise summaries in 2-3 sentences. "
                 "Focus on the key points and main ideas.")};
 }

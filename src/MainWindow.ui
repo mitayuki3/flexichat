@@ -133,6 +133,12 @@
         </item>
         <item>
          <widget class="QGroupBox" name="profileSettingsGroupBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="title">
            <string>プロファイル設定</string>
           </property>
@@ -145,28 +151,11 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <layout class="QHBoxLayout" name="profileNameLayout">
-             <item>
-              <widget class="QLineEdit" name="profileIconEdit">
-               <property name="maximumWidth">
-                <number>48</number>
-               </property>
-               <property name="placeholderText">
-                <string>💬</string>
-               </property>
-               <property name="toolTip">
-                <string>アイコン</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="profileNameEdit">
-               <property name="placeholderText">
-                <string>プロファイル名</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
+            <widget class="QLineEdit" name="profileNameEdit">
+             <property name="placeholderText">
+              <string>プロファイル名</string>
+             </property>
+            </widget>
            </item>
            <item row="1" column="0">
             <widget class="QLabel" name="profilePromptLabel">
@@ -177,8 +166,17 @@
            </item>
            <item row="1" column="1">
             <widget class="QPlainTextEdit" name="profilePromptEdit">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumHeight">
+              <number>80</number>
+             </property>
              <property name="maximumHeight">
-              <number>100</number>
+              <number>80</number>
              </property>
              <property name="placeholderText">
               <string>システムプロンプトを入力...</string>

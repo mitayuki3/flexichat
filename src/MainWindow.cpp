@@ -94,8 +94,6 @@ void MainWindow::connectSignals() {
     // プロファイル設定エディタ
     connect(ui->profileNameEdit, &QLineEdit::editingFinished, this,
             &MainWindow::commitProfileEdits);
-    connect(ui->profileIconEdit, &QLineEdit::editingFinished, this,
-            &MainWindow::commitProfileEdits);
     connect(ui->profilePromptEdit, &QPlainTextEdit::textChanged, this,
             &MainWindow::commitProfileEdits);
     connect(ui->profileTemperatureSpin,
@@ -169,7 +167,6 @@ void MainWindow::loadProfileIntoEditor(const SystemPromptProfile &profile) {
     m_loadingProfileFields = true;
     m_displayedProfileId = profile.id;
     ui->profileNameEdit->setText(profile.name);
-    ui->profileIconEdit->setText(profile.icon);
     ui->profilePromptEdit->setPlainText(profile.prompt);
     ui->profileTemperatureSpin->setValue(profile.temperature);
     ui->profileMaxTokensSpin->setValue(profile.maxTokens);
@@ -197,13 +194,11 @@ void MainWindow::commitProfileEdits() {
     } else {
         updated.name = name;
     }
-    updated.icon = ui->profileIconEdit->text().trimmed();
     updated.prompt = ui->profilePromptEdit->toPlainText();
     updated.temperature = ui->profileTemperatureSpin->value();
     updated.maxTokens = ui->profileMaxTokensSpin->value();
 
-    if (updated.name == current->name && updated.icon == current->icon &&
-        updated.prompt == current->prompt &&
+    if (updated.name == current->name && updated.prompt == current->prompt &&
         qFuzzyCompare(updated.temperature, current->temperature) &&
         updated.maxTokens == current->maxTokens) {
         return;

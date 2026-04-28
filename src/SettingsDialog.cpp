@@ -62,7 +62,6 @@ void SettingsDialog::loadProfileIntoFields(const QString &profileId) {
     }
 
     ui->nameEdit->setText(profile->name);
-    ui->iconEdit->setText(profile->icon);
     ui->promptEdit->setPlainText(profile->prompt);
     ui->baseUrlEdit->setText("http://localhost:1234");
     ui->temperatureSpin->setValue(profile->temperature);
@@ -71,7 +70,6 @@ void SettingsDialog::loadProfileIntoFields(const QString &profileId) {
 
 void SettingsDialog::clearFields() {
     ui->nameEdit->clear();
-    ui->iconEdit->clear();
     ui->promptEdit->clear();
     ui->temperatureSpin->setValue(0.7);
     ui->maxTokensSpin->setValue(2048);
@@ -146,7 +144,6 @@ void SettingsDialog::onConnectionTestResult(bool success,
 SystemPromptProfile SettingsDialog::buildProfileFromFields() const {
     SystemPromptProfile p;
     p.name = ui->nameEdit->text().trimmed();
-    p.icon = ui->iconEdit->text().trimmed();
     p.prompt = ui->promptEdit->toPlainText().trimmed();
     p.temperature = ui->temperatureSpin->value();
     p.maxTokens = ui->maxTokensSpin->value();

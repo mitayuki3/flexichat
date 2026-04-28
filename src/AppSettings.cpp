@@ -35,7 +35,6 @@ void AppSettings::saveProfiles(const QList<SystemPromptProfile> &profiles) {
         QJsonObject obj;
         obj["id"] = p.id;
         obj["name"] = p.name;
-        obj["icon"] = p.icon;
         obj["prompt"] = p.prompt;
         obj["temperature"] = p.temperature;
         obj["maxTokens"] = p.maxTokens;
@@ -63,7 +62,6 @@ QList<SystemPromptProfile> AppSettings::loadProfiles() const {
         SystemPromptProfile p;
         p.id = obj["id"].toString();
         p.name = obj["name"].toString();
-        p.icon = obj["icon"].toString();
         p.prompt = obj["prompt"].toString();
         p.temperature = obj["temperature"].toDouble(0.7);
         p.maxTokens = obj["maxTokens"].toInt(2048);
