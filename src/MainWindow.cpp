@@ -295,7 +295,7 @@ void MainWindow::onAddProfileClicked() {
 }
 
 /**
- * @brief 現在のプロファイルをゴミ箱に移す
+ * @brief 現在のプロファイルをゴミ箱に移す（確認なし）
  */
 void MainWindow::onTrashProfileClicked() {
     QString id = m_profileManager->getActiveProfileId();
@@ -313,39 +313,40 @@ void MainWindow::onTrashProfileClicked() {
     }
 
     auto active = m_profileManager->getActiveProfile();
-    auto reply = QMessageBox::question(
-        this, "プロファイルをゴミ箱へ",
-        QString("プロファイル「%1」をゴミ箱に入れますか？\n"
-                "「ゴミ箱を空にする」を実行するまでは復元できます。")
-            .arg(active.displayName()),
-        QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel);
-    if (reply != QMessageBox::Ok) {
-        return;
-    }
-
     m_profileManager->trashProfile(id);
-    ui->statusbar->showMessage("ゴミ箱に移動しました", 3000);
+    ui->statusbar->showMessage(
+        QString("「%1」をゴミ箱に移動しました").arg(active.displayName()),
+        3000);
 }
 
 /**
  * @brief ゴミ箱を空にする（永久削除）
+ * 削除されるプロファイル名一覧を確認ダイアログに表示する
  */
 void MainWindow::onEmptyTrashClicked() {
-    int n = m_profileManager->getTrashedCount();
-    if (n <= 0) {
+    auto trashed = m_profileManager->getTrashedProfiles();
+    if (trashed.isEmpty()) {
         return;
+    }
+
+    QStringList names;
+    names.reserve(trashed.size());
+    for (const auto &p : trashed) {
+        names << QString("・%1").arg(p.displayName());
     }
 
     auto reply = QMessageBox::question(
         this, "ゴミ箱を空にする",
-        QString("ゴミ箱内の %1 件のプロファイルを完全に削除します。"
-                "この操作は元に戻せません。続行しますか？")
-            .arg(n),
+        QString("以下の %1 件のプロファイルを完全に削除します。"
+                "この操作は元に戻せません。\n\n%2\n\n続行しますか？")
+            .arg(trashed.size())
+            .arg(names.join("\n")),
         QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel);
     if (reply != QMessageBox::Ok) {
         return;
     }
 
+    int n = trashed.size();
     m_profileManager->emptyTrash();
     ui->statusbar->showMessage(
         QString("ゴミ箱を空にしました (%1 件削除)").arg(n), 3000);
