@@ -89,10 +89,10 @@ int main(int argc, char *argv[]) {
                      &AppSettings::saveTtsVoice);
 
     // MainWindow → LMStudioClient のシグナル仲介
+    // チャット履歴は MainWindow の表示モデルを Single Source of Truth として
+    // 毎回その時点のスナップショットを LMStudioClient に渡す
     QObject::connect(&mainWindow, &MainWindow::requestSend, client,
                      &LMStudioClient::sendRequest);
-    QObject::connect(&mainWindow, &MainWindow::chatHistoryReplaceRequested,
-                     client, &LMStudioClient::setChatHistory);
     QObject::connect(
         &mainWindow, &MainWindow::profileChangeRequested, &mainWindow,
         [client, profileManager = profileManager.data()](const QString &id) {

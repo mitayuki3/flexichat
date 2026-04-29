@@ -20,9 +20,15 @@ public:
 
     /**
    * @brief チャットリクエストの送信
-   * @param message ユーザーのメッセージ
+   * @param history 送信するチャット履歴（system プロンプトを除く user /
+   *                assistant メッセージの JSON 配列）。最後の要素が今回送る
+   *                ユーザーメッセージとなる。
+   *
+   * チャット履歴はクライアント内部に保持しない。呼び出し側
+   * （MainWindow の表示モデル）を Single Source of Truth として、
+   * 毎回その時点の履歴を渡す。
    */
-    void sendRequest(const QString &message);
+    void sendRequest(const QJsonArray &history);
 
     /**
    * @brief プロファイルの設定
@@ -34,20 +40,6 @@ public:
    * @brief ベースURLの設定
    */
     void setBaseUrl(const QString &url);
-
-    /**
-   * @brief チャット履歴のリセット
-   */
-    void resetChatHistory();
-
-    /**
-   * @brief チャット履歴の置き換え
-   * @param history user / assistant メッセージで構成された JSON 配列
-   *
-   * UI 側でチャットアイテムが編集・削除されたときに呼び出し、
-   * 次回以降のリクエストで送信される履歴を UI と同期する。
-   */
-    void setChatHistory(const QJsonArray &history);
 
     /**
    * @brief 接続テスト
@@ -67,7 +59,6 @@ private slots:
 
 private:
     QNetworkAccessManager *m_networkManager;
-    QJsonArray m_chatHistory;
     QString m_baseUrl;
     SystemPromptProfile m_activeProfile;
     bool m_isConnectionTest;

@@ -397,7 +397,9 @@ void MainWindow::onSendClicked() {
     ui->inputField->setEnabled(false);
     ui->sendButton->setEnabled(false);
 
-    emit requestSend(message);
+    // チャット表示モデルを Single Source of Truth として、
+    // 現時点のチャット履歴を抽出して送信する
+    emit requestSend(buildChatHistoryFromModel());
 }
 
 /**
@@ -586,7 +588,6 @@ void MainWindow::editSelectedChatItem() {
         return;
     }
     m_model->setData(idx, newText);
-    emit chatHistoryReplaceRequested(buildChatHistoryFromModel());
     syncTtsButtons();
 }
 
@@ -617,7 +618,6 @@ void MainWindow::deleteSelectedChatItems() {
     }
 
     m_pendingTtsText.clear();
-    emit chatHistoryReplaceRequested(buildChatHistoryFromModel());
     syncTtsButtons();
 }
 

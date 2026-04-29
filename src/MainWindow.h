@@ -40,7 +40,7 @@ public slots:
     void appendTtsOutput(QString const &filePath);
 
 signals:
-    void requestSend(const QString &message);
+    void requestSend(const QJsonArray &history);
     void profileChangeRequested(const QString &profileId);
     void synthesizeRequested(const QString &text);
     void synthesizeMultipleRequested(QStringList const &list);
@@ -49,7 +49,6 @@ signals:
     void ttsPlayRequested();
     void ttsFileSelected(const QString &filePath);
     void ttsFileActivated(const QString &filePath);
-    void chatHistoryReplaceRequested(const QJsonArray &history);
 
 private slots:
     void onSendClicked();
