@@ -41,7 +41,6 @@ public slots:
 signals:
     void requestSend(const QString &message);
     void profileChangeRequested(const QString &profileId);
-    void openSettingsRequested();
     void synthesizeRequested(const QString &text);
     void synthesizeMultipleRequested(QStringList const &list);
     void autoplayChanged(bool checked);
@@ -60,6 +59,9 @@ private slots:
     void onTtsListActivated(const QModelIndex &index);
     void scheduleProfileCommit();
     void commitProfileEdits();
+    void onAddProfileClicked();
+    void onTrashProfileClicked();
+    void onEmptyTrashClicked();
 
 private:
     Ui::MainWindow *ui;
@@ -77,4 +79,5 @@ private:
     void appendMessage(const QString &role, const QString &message);
     void populateProfileCombo();
     void loadProfileIntoEditor(const SystemPromptProfile &profile);
+    void updateTrashButton();
 };

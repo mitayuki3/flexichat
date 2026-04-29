@@ -1,6 +1,5 @@
 #include "MainWindow.h"
 #include "ProfileManager.h"
-#include "SettingsDialog.h"
 #include "ui_MainWindow.h"
 #include <QComboBox>
 #include <QDoubleSpinBox>
@@ -8,6 +7,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPlainTextEdit>
+#include <QPushButton>
 #include <QSpinBox>
 
 /**
@@ -70,9 +70,6 @@ void MainWindow::connectSignals() {
             "AI チャットアプリ FlexiChat v1.0.0\nImplemented with Qt");
     });
 
-    connect(ui->actionSettings, &QAction::triggered, this,
-            &MainWindow::openSettingsRequested);
-
     connect(ui->sendButton, &QPushButton::clicked, this,
             &MainWindow::onSendClicked);
     connect(ui->inputField, &QLineEdit::returnPressed, this,
@@ -121,6 +118,14 @@ void MainWindow::connectSignals() {
             this, [this](int) { scheduleProfileCommit(); });
     connect(ui->profileMaxTokensSpin, &QSpinBox::editingFinished, this,
             &MainWindow::commitProfileEdits);
+
+    // プロファイルの追加・ゴミ箱・ゴミ箱を空にする
+    connect(ui->addProfileButton, &QPushButton::clicked, this,
+            &MainWindow::onAddProfileClicked);
+    connect(ui->trashProfileButton, &QPushButton::clicked, this,
+            &MainWindow::onTrashProfileClicked);
+    connect(ui->emptyTrashButton, &QPushButton::clicked, this,
+            &MainWindow::onEmptyTrashClicked);
 }
 
 /**
@@ -143,6 +148,24 @@ void MainWindow::populateProfileCombo() {
     }
 
     profileCombo->setCurrentIndex(activeIdx);
+    updateTrashButton();
+}
+
+/**
+ * @brief ゴミ箱を空にするボタンの表示状態を更新
+ */
+void MainWindow::updateTrashButton() {
+    int n = m_profileManager->getTrashedCount();
+    ui->emptyTrashButton->setEnabled(n > 0);
+    if (n > 0) {
+        ui->emptyTrashButton->setText(QString("ゴミ箱を空にする (%1)").arg(n));
+    } else {
+        ui->emptyTrashButton->setText("ゴミ箱を空にする");
+    }
+    // 残るプロファイルが 1 つだけならゴミ箱に入れさせない
+    bool canTrash = m_profileManager->getAllProfiles().size() > 1;
+    ui->trashProfileButton->setEnabled(canTrash &&
+                                       !m_displayedProfileId.isEmpty());
 }
 
 /**
@@ -196,6 +219,7 @@ void MainWindow::loadProfileIntoEditor(const SystemPromptProfile &profile) {
     ui->profileMaxTokensSpin->setValue(profile.maxTokens);
     ui->profileSettingsGroupBox->setEnabled(!profile.id.isEmpty());
     m_loadingProfileFields = false;
+    updateTrashButton();
 }
 
 /**
@@ -243,6 +267,88 @@ void MainWindow::commitProfileEdits() {
     m_committingFromEditor = true;
     m_profileManager->updateProfile(updated);
     m_committingFromEditor = false;
+}
+
+/**
+ * @brief プロファイルを新規追加
+ */
+void MainWindow::onAddProfileClicked() {
+    // 編集中の内容を確実に保存してから追加する
+    if (m_profileCommitTimer->isActive()) {
+        m_profileCommitTimer->stop();
+        commitProfileEdits();
+    }
+
+    SystemPromptProfile p =
+        SystemPromptProfile::createDefault("", "新規プロファイル");
+    m_profileManager->addProfile(p);
+
+    // 追加されたプロファイルをアクティブにする（末尾に追加されている）
+    auto profiles = m_profileManager->getAllProfiles();
+    if (!profiles.isEmpty()) {
+        m_profileManager->setActiveProfile(profiles.last().id);
+    }
+
+    // 名前入力にフォーカスを当てて即編集できるようにする
+    ui->profileNameEdit->setFocus();
+    ui->profileNameEdit->selectAll();
+}
+
+/**
+ * @brief 現在のプロファイルをゴミ箱に移す
+ */
+void MainWindow::onTrashProfileClicked() {
+    QString id = m_profileManager->getActiveProfileId();
+    if (id.isEmpty()) {
+        return;
+    }
+    if (m_profileManager->getAllProfiles().size() <= 1) {
+        ui->statusbar->showMessage(
+            "最後のプロファイルはゴミ箱に入れられません", 3000);
+        return;
+    }
+
+    if (m_profileCommitTimer->isActive()) {
+        m_profileCommitTimer->stop();
+    }
+
+    auto active = m_profileManager->getActiveProfile();
+    auto reply = QMessageBox::question(
+        this, "プロファイルをゴミ箱へ",
+        QString("プロファイル「%1」をゴミ箱に入れますか？\n"
+                "「ゴミ箱を空にする」を実行するまでは復元できます。")
+            .arg(active.displayName()),
+        QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel);
+    if (reply != QMessageBox::Ok) {
+        return;
+    }
+
+    m_profileManager->trashProfile(id);
+    ui->statusbar->showMessage("ゴミ箱に移動しました", 3000);
+}
+
+/**
+ * @brief ゴミ箱を空にする（永久削除）
+ */
+void MainWindow::onEmptyTrashClicked() {
+    int n = m_profileManager->getTrashedCount();
+    if (n <= 0) {
+        return;
+    }
+
+    auto reply = QMessageBox::question(
+        this, "ゴミ箱を空にする",
+        QString("ゴミ箱内の %1 件のプロファイルを完全に削除します。"
+                "この操作は元に戻せません。続行しますか？")
+            .arg(n),
+        QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel);
+    if (reply != QMessageBox::Ok) {
+        return;
+    }
+
+    m_profileManager->emptyTrash();
+    ui->statusbar->showMessage(
+        QString("ゴミ箱を空にしました (%1 件削除)").arg(n), 3000);
 }
 
 /**

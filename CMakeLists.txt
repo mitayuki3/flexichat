@@ -27,9 +27,6 @@ set(PROJECT_SOURCES
     src/OpenAITTSClient.h
     src/ProfileManager.cpp
     src/ProfileManager.h
-    src/SettingsDialog.cpp
-    src/SettingsDialog.h
-    src/SettingsDialog.ui
     src/SystemPromptProfile.h
 )
 
