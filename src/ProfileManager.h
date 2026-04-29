@@ -13,6 +13,8 @@ public:
     explicit ProfileManager(AppSettings *settings, QObject *parent = nullptr);
 
     QList<SystemPromptProfile> getAllProfiles() const;
+    QList<SystemPromptProfile> getTrashedProfiles() const;
+    int getTrashedCount() const;
     SystemPromptProfile getActiveProfile() const;
     QString getActiveProfileId() const;
     SystemPromptProfile *getProfileById(const QString &id);
@@ -21,7 +23,9 @@ public:
     void setActiveProfile(const QString &id);
     void addProfile(const SystemPromptProfile &profile);
     void updateProfile(const SystemPromptProfile &profile);
-    void deleteProfile(const QString &id);
+    void trashProfile(const QString &id);
+    void restoreProfile(const QString &id);
+    void emptyTrash();
     void loadProfiles();
     void saveAllProfiles();
 

@@ -40,6 +40,7 @@ void AppSettings::saveProfiles(const QList<SystemPromptProfile> &profiles) {
         m_settings.setValue("prompt", p.prompt);
         m_settings.setValue("temperature", p.temperature);
         m_settings.setValue("maxTokens", p.maxTokens);
+        m_settings.setValue("trashed", p.trashed);
     }
     m_settings.endArray();
 
@@ -61,6 +62,7 @@ QList<SystemPromptProfile> AppSettings::loadProfiles() const {
         p.prompt = m_settings.value("prompt").toString();
         p.temperature = m_settings.value("temperature", 0.7).toDouble();
         p.maxTokens = m_settings.value("maxTokens", 2048).toInt();
+        p.trashed = m_settings.value("trashed", false).toBool();
         profiles.append(p);
     }
     m_settings.endArray();
@@ -88,6 +90,7 @@ QList<SystemPromptProfile> AppSettings::loadProfiles() const {
         p.prompt = obj["prompt"].toString();
         p.temperature = obj["temperature"].toDouble(0.7);
         p.maxTokens = obj["maxTokens"].toInt(2048);
+        p.trashed = obj["trashed"].toBool(false);
         profiles.append(p);
     }
 

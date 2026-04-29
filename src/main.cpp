@@ -3,7 +3,6 @@
 #include "MainLogic.h"
 #include "MainWindow.h"
 #include "ProfileManager.h"
-#include "SettingsDialog.h"
 #include <QApplication>
 #include <QAudioDevice>
 #include <QAudioOutput>
@@ -135,21 +134,6 @@ int main(int argc, char *argv[]) {
     // オーディオプレイヤー状態同期
     QObject::connect(audioPlayer, &QMediaPlayer::playingChanged, &mainWindow,
                      &MainWindow::syncTtsButtons);
-
-    // 設定ダイアログの表示（シグナル経由で開く）
-    QObject::connect(
-        &mainWindow, &MainWindow::openSettingsRequested, &mainWindow,
-        [client, profileManager = profileManager.data()]() {
-            SettingsDialog dialog(profileManager);
-
-            // 接続テストのシグナル仲介
-            QObject::connect(&dialog, &SettingsDialog::connectionTestRequested,
-                             client, &LMStudioClient::testConnection);
-            QObject::connect(client, &LMStudioClient::connectionTestResult, &dialog,
-                             &SettingsDialog::onConnectionTestResult);
-
-            dialog.exec();
-        });
 
     QObject::connect(workerThread, &QThread::finished, logic,
                      &QObject::deleteLater);

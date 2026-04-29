@@ -8,6 +8,7 @@ struct SystemPromptProfile {
     QString prompt;
     double temperature = 0.7;
     int maxTokens = 2048;
+    bool trashed = false;
 
     bool operator==(const SystemPromptProfile &other) const {
         return id == other.id;

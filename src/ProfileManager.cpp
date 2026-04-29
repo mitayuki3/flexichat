@@ -7,16 +7,41 @@ ProfileManager::ProfileManager(AppSettings *settings, QObject *parent)
     : QObject(parent), m_settings(settings) {}
 
 QList<SystemPromptProfile> ProfileManager::getAllProfiles() const {
-    return m_profiles;
+    QList<SystemPromptProfile> active;
+    active.reserve(m_profiles.size());
+    for (const auto &p : m_profiles) {
+        if (!p.trashed) {
+            active.append(p);
+        }
+    }
+    return active;
+}
+
+QList<SystemPromptProfile> ProfileManager::getTrashedProfiles() const {
+    QList<SystemPromptProfile> trashed;
+    for (const auto &p : m_profiles) {
+        if (p.trashed) {
+            trashed.append(p);
+        }
+    }
+    return trashed;
+}
+
+int ProfileManager::getTrashedCount() const {
+    return std::count_if(
+        m_profiles.begin(), m_profiles.end(),
+        [](const SystemPromptProfile &p) { return p.trashed; });
 }
 
 SystemPromptProfile ProfileManager::getActiveProfile() const {
     if (auto *p = getProfileById(m_activeProfileId)) {
         return *p;
     }
-    // Fallback: return first profile
-    if (!m_profiles.isEmpty()) {
-        return m_profiles.first();
+    // Fallback: return first non-trashed profile
+    for (const auto &p : m_profiles) {
+        if (!p.trashed) {
+            return p;
+        }
     }
     return SystemPromptProfile{};
 }
@@ -49,7 +74,8 @@ void ProfileManager::setActiveProfile(const QString &id) {
         return;
     }
 
-    if (getProfileById(id)) {
+    auto *p = getProfileById(id);
+    if (p && !p->trashed) {
         m_activeProfileId = id;
         m_settings->saveActiveProfileId(id);
         emit activeProfileChanged(getActiveProfile());
@@ -82,25 +108,62 @@ void ProfileManager::updateProfile(const SystemPromptProfile &profile) {
     }
 }
 
-void ProfileManager::deleteProfile(const QString &id) {
-    auto it = std::remove_if(
-        m_profiles.begin(), m_profiles.end(),
-        [&id](const SystemPromptProfile &p) { return p.id == id; });
-    if (it == m_profiles.end()) {
+void ProfileManager::trashProfile(const QString &id) {
+    auto *p = getProfileById(id);
+    if (!p || p->trashed) {
+        return;
+    }
+    p->trashed = true;
+
+    // ゴミ箱に移したのがアクティブだった場合、別のプロファイルへ切り替え
+    if (m_activeProfileId == id) {
+        QString nextId;
+        for (const auto &prof : m_profiles) {
+            if (!prof.trashed) {
+                nextId = prof.id;
+                break;
+            }
+        }
+        if (nextId.isEmpty()) {
+            // 残らない場合はデフォルトを再生成
+            ensureDefaultProfileExists();
+            for (const auto &prof : m_profiles) {
+                if (!prof.trashed) {
+                    nextId = prof.id;
+                    break;
+                }
+            }
+        }
+        m_activeProfileId = nextId;
+        m_settings->saveActiveProfileId(nextId);
+        saveAllProfiles();
+        emit profileListChanged();
+        emit activeProfileChanged(getActiveProfile());
         return;
     }
 
-    m_profiles.erase(it, m_profiles.end());
+    saveAllProfiles();
+    emit profileListChanged();
+}
 
-    // If deleted profile was active, switch to first available
-    if (m_activeProfileId == id && !m_profiles.isEmpty()) {
-        setActiveProfile(m_profiles.first().id);
-    } else if (m_profiles.isEmpty()) {
-        // Create a default profile if none remain
-        ensureDefaultProfileExists();
-        setActiveProfile(m_profiles.first().id);
+void ProfileManager::restoreProfile(const QString &id) {
+    auto *p = getProfileById(id);
+    if (!p || !p->trashed) {
+        return;
     }
+    p->trashed = false;
+    saveAllProfiles();
+    emit profileListChanged();
+}
 
+void ProfileManager::emptyTrash() {
+    auto it = std::remove_if(
+        m_profiles.begin(), m_profiles.end(),
+        [](const SystemPromptProfile &p) { return p.trashed; });
+    if (it == m_profiles.end()) {
+        return;
+    }
+    m_profiles.erase(it, m_profiles.end());
     saveAllProfiles();
     emit profileListChanged();
 }
@@ -112,9 +175,16 @@ void ProfileManager::loadProfiles() {
     // Load active profile ID
     m_activeProfileId = m_settings->loadActiveProfileId();
 
-    // Validate active profile exists
-    if (!getProfileById(m_activeProfileId) && !m_profiles.isEmpty()) {
-        m_activeProfileId = m_profiles.first().id;
+    // Validate: active profile must exist and not be trashed
+    auto *active = getProfileById(m_activeProfileId);
+    if (!active || active->trashed) {
+        m_activeProfileId.clear();
+        for (const auto &p : m_profiles) {
+            if (!p.trashed) {
+                m_activeProfileId = p.id;
+                break;
+            }
+        }
     }
 }
 
@@ -158,9 +228,13 @@ QList<SystemPromptProfile> ProfileManager::builtInDefaults() {
 }
 
 void ProfileManager::ensureDefaultProfileExists() {
-    if (m_profiles.isEmpty()) {
-        auto defaults = builtInDefaults();
-        m_profiles = defaults;
+    bool hasActive = std::any_of(
+        m_profiles.begin(), m_profiles.end(),
+        [](const SystemPromptProfile &p) { return !p.trashed; });
+    if (!hasActive) {
+        for (const auto &p : builtInDefaults()) {
+            m_profiles.append(p);
+        }
         saveAllProfiles();
     }
 }
