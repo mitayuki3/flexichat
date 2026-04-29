@@ -41,6 +41,15 @@ public:
     void resetChatHistory();
 
     /**
+   * @brief チャット履歴の置き換え
+   * @param history user / assistant メッセージで構成された JSON 配列
+   *
+   * UI 側でチャットアイテムが編集・削除されたときに呼び出し、
+   * 次回以降のリクエストで送信される履歴を UI と同期する。
+   */
+    void setChatHistory(const QJsonArray &history);
+
+    /**
    * @brief 接続テスト
    */
     void testConnection();

@@ -91,6 +91,8 @@ int main(int argc, char *argv[]) {
     // MainWindow → LMStudioClient のシグナル仲介
     QObject::connect(&mainWindow, &MainWindow::requestSend, client,
                      &LMStudioClient::sendRequest);
+    QObject::connect(&mainWindow, &MainWindow::chatHistoryReplaceRequested,
+                     client, &LMStudioClient::setChatHistory);
     QObject::connect(
         &mainWindow, &MainWindow::profileChangeRequested, &mainWindow,
         [client, profileManager = profileManager.data()](const QString &id) {

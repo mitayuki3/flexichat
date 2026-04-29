@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QInputDialog>
+#include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -585,6 +586,7 @@ void MainWindow::editSelectedChatItem() {
         return;
     }
     m_model->setData(idx, newText);
+    emit chatHistoryReplaceRequested(buildChatHistoryFromModel());
     syncTtsButtons();
 }
 
@@ -615,7 +617,35 @@ void MainWindow::deleteSelectedChatItems() {
     }
 
     m_pendingTtsText.clear();
+    emit chatHistoryReplaceRequested(buildChatHistoryFromModel());
     syncTtsButtons();
+}
+
+/**
+ * @brief 現在のチャット表示モデルから API 送信用のチャット履歴を再構築する
+ *
+ * "You: " で始まる行は user メッセージ、"AI: " で始まる行は assistant
+ * メッセージとして扱う。エラーメッセージなど、それ以外の行は履歴に含めない。
+ */
+QJsonArray MainWindow::buildChatHistoryFromModel() const {
+    QJsonArray history;
+    const int rowCount = m_model->rowCount();
+    for (int i = 0; i < rowCount; ++i) {
+        QString text = m_model->data(m_model->index(i)).toString();
+        QJsonObject msg;
+        if (text.startsWith("You: ")) {
+            msg["role"] = "user";
+            msg["content"] = text.mid(5);
+        } else if (text.startsWith("AI: ")) {
+            msg["role"] = "assistant";
+            msg["content"] = text.mid(4);
+        } else {
+            // エラー等、API へ送信すべきでない行はスキップ
+            continue;
+        }
+        history.append(msg);
+    }
+    return history;
 }
 
 /**

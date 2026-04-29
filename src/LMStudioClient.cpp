@@ -196,6 +196,13 @@ void LMStudioClient::setBaseUrl(const QString &url) { m_baseUrl = url; }
 void LMStudioClient::resetChatHistory() { m_chatHistory = QJsonArray(); }
 
 /**
+ * @brief チャット履歴の置き換え
+ */
+void LMStudioClient::setChatHistory(const QJsonArray &history) {
+    m_chatHistory = history;
+}
+
+/**
  * @brief 接続テスト
  */
 void LMStudioClient::testConnection() {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QComboBox>
+#include <QJsonArray>
 #include <QMainWindow>
 #include <QStringListModel>
 #include <QTimer>
@@ -48,6 +49,7 @@ signals:
     void ttsPlayRequested();
     void ttsFileSelected(const QString &filePath);
     void ttsFileActivated(const QString &filePath);
+    void chatHistoryReplaceRequested(const QJsonArray &history);
 
 private slots:
     void onSendClicked();
@@ -81,6 +83,7 @@ private:
     void setupUI();
     void connectSignals();
     void appendMessage(const QString &role, const QString &message);
+    QJsonArray buildChatHistoryFromModel() const;
     void populateProfileCombo();
     void loadProfileIntoEditor(const SystemPromptProfile &profile);
     void populateTrashList();
