@@ -62,6 +62,7 @@ private slots:
     void onAddProfileClicked();
     void onTrashProfileClicked();
     void onEmptyTrashClicked();
+    void onRestoreTrashedClicked();
 
 private:
     Ui::MainWindow *ui;
@@ -79,5 +80,6 @@ private:
     void appendMessage(const QString &role, const QString &message);
     void populateProfileCombo();
     void loadProfileIntoEditor(const SystemPromptProfile &profile);
+    void populateTrashList();
     void updateTrashButton();
 };

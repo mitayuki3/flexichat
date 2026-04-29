@@ -119,13 +119,19 @@ void MainWindow::connectSignals() {
     connect(ui->profileMaxTokensSpin, &QSpinBox::editingFinished, this,
             &MainWindow::commitProfileEdits);
 
-    // プロファイルの追加・ゴミ箱・ゴミ箱を空にする
+    // プロファイルの追加・ゴミ箱
     connect(ui->addProfileButton, &QPushButton::clicked, this,
             &MainWindow::onAddProfileClicked);
     connect(ui->trashProfileButton, &QPushButton::clicked, this,
             &MainWindow::onTrashProfileClicked);
+
+    // ゴミ箱タブ
+    connect(ui->restoreTrashButton, &QPushButton::clicked, this,
+            &MainWindow::onRestoreTrashedClicked);
     connect(ui->emptyTrashButton, &QPushButton::clicked, this,
             &MainWindow::onEmptyTrashClicked);
+    connect(ui->trashListWidget, &QListWidget::itemDoubleClicked, this,
+            [this](QListWidgetItem *) { onRestoreTrashedClicked(); });
 }
 
 /**
@@ -148,20 +154,39 @@ void MainWindow::populateProfileCombo() {
     }
 
     profileCombo->setCurrentIndex(activeIdx);
+    populateTrashList();
     updateTrashButton();
 }
 
 /**
- * @brief ゴミ箱を空にするボタンの表示状態を更新
+ * @brief ゴミ箱タブのリストを再構築する
+ * 各アイテムにはプロファイル ID を Qt::UserRole として持たせる
+ */
+void MainWindow::populateTrashList() {
+    auto trashed = m_profileManager->getTrashedProfiles();
+    ui->trashListWidget->clear();
+    for (const auto &p : trashed) {
+        auto *item = new QListWidgetItem(p.displayName(), ui->trashListWidget);
+        item->setData(Qt::UserRole, p.id);
+    }
+}
+
+/**
+ * @brief ゴミ箱関連ボタンとタブタイトルの状態を更新
  */
 void MainWindow::updateTrashButton() {
     int n = m_profileManager->getTrashedCount();
-    ui->emptyTrashButton->setEnabled(n > 0);
-    if (n > 0) {
-        ui->emptyTrashButton->setText(QString("ゴミ箱を空にする (%1)").arg(n));
-    } else {
-        ui->emptyTrashButton->setText("ゴミ箱を空にする");
+
+    // タブタイトルに件数を表示
+    int trashTabIndex = ui->tabWidget->indexOf(ui->trashTab);
+    if (trashTabIndex >= 0) {
+        ui->tabWidget->setTabText(
+            trashTabIndex, n > 0 ? QString("ゴミ箱 (%1)").arg(n) : "ゴミ箱");
     }
+
+    ui->emptyTrashButton->setEnabled(n > 0);
+    ui->restoreTrashButton->setEnabled(n > 0);
+
     // 残るプロファイルが 1 つだけならゴミ箱に入れさせない
     bool canTrash = m_profileManager->getAllProfiles().size() > 1;
     ui->trashProfileButton->setEnabled(canTrash &&
@@ -350,6 +375,25 @@ void MainWindow::onEmptyTrashClicked() {
     m_profileManager->emptyTrash();
     ui->statusbar->showMessage(
         QString("ゴミ箱を空にしました (%1 件削除)").arg(n), 3000);
+}
+
+/**
+ * @brief 選択中のゴミ箱内プロファイルを復元する
+ */
+void MainWindow::onRestoreTrashedClicked() {
+    auto *item = ui->trashListWidget->currentItem();
+    if (!item) {
+        return;
+    }
+    QString id = item->data(Qt::UserRole).toString();
+    if (id.isEmpty()) {
+        return;
+    }
+    auto *p = m_profileManager->getProfileById(id);
+    QString name = p ? p->displayName() : id;
+    m_profileManager->restoreProfile(id);
+    ui->statusbar->showMessage(
+        QString("「%1」をゴミ箱から戻しました").arg(name), 3000);
 }
 
 /**

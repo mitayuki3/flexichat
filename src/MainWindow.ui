@@ -162,16 +162,6 @@
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QPushButton" name="emptyTrashButton">
-            <property name="toolTip">
-             <string>ゴミ箱内のプロファイルを完全に削除</string>
-            </property>
-            <property name="text">
-             <string>ゴミ箱を空にする</string>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
         <item>
@@ -401,6 +391,70 @@
            <widget class="QPushButton" name="ttsPlayButton">
             <property name="text">
              <string>再生</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="trashTab">
+       <attribute name="title">
+        <string>ゴミ箱</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="trashLayout">
+        <item>
+         <widget class="QLabel" name="trashHintLabel">
+          <property name="text">
+           <string>ゴミ箱に入れたプロファイル。「元に戻す」で復元、「ゴミ箱を空にする」で完全に削除します。</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QListWidget" name="trashListWidget">
+          <property name="editTriggers">
+           <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="trashButtonLayout">
+          <item>
+           <widget class="QPushButton" name="restoreTrashButton">
+            <property name="toolTip">
+             <string>選択したプロファイルをゴミ箱から元に戻す</string>
+            </property>
+            <property name="text">
+             <string>元に戻す</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="trashButtonSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="emptyTrashButton">
+            <property name="toolTip">
+             <string>ゴミ箱内のプロファイルを完全に削除</string>
+            </property>
+            <property name="text">
+             <string>ゴミ箱を空にする</string>
             </property>
            </widget>
           </item>
