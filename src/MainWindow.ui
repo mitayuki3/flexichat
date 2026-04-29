@@ -404,16 +404,6 @@
        </attribute>
        <layout class="QVBoxLayout" name="trashLayout">
         <item>
-         <widget class="QLabel" name="trashHintLabel">
-          <property name="text">
-           <string>ゴミ箱に入れたプロファイル。「元に戻す」で復元、「ゴミ箱を空にする」で完全に削除します。</string>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QListWidget" name="trashListWidget">
           <property name="editTriggers">
            <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>

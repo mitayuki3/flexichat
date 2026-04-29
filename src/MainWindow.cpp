@@ -345,33 +345,13 @@ void MainWindow::onTrashProfileClicked() {
 }
 
 /**
- * @brief ゴミ箱を空にする（永久削除）
- * 削除されるプロファイル名一覧を確認ダイアログに表示する
+ * @brief ゴミ箱を空にする（確認なし・即時削除）
  */
 void MainWindow::onEmptyTrashClicked() {
-    auto trashed = m_profileManager->getTrashedProfiles();
-    if (trashed.isEmpty()) {
+    int n = m_profileManager->getTrashedCount();
+    if (n <= 0) {
         return;
     }
-
-    QStringList names;
-    names.reserve(trashed.size());
-    for (const auto &p : trashed) {
-        names << QString("・%1").arg(p.displayName());
-    }
-
-    auto reply = QMessageBox::question(
-        this, "ゴミ箱を空にする",
-        QString("以下の %1 件のプロファイルを完全に削除します。"
-                "この操作は元に戻せません。\n\n%2\n\n続行しますか？")
-            .arg(trashed.size())
-            .arg(names.join("\n")),
-        QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel);
-    if (reply != QMessageBox::Ok) {
-        return;
-    }
-
-    int n = trashed.size();
     m_profileManager->emptyTrash();
     ui->statusbar->showMessage(
         QString("ゴミ箱を空にしました (%1 件削除)").arg(n), 3000);
