@@ -54,6 +54,9 @@ private slots:
     void onProfileComboActivated(int index);
     void onPlayTtsClicked();
     void onChatDisplayClicked(const QModelIndex &index);
+    void onChatDisplayContextMenu(const QPoint &pos);
+    void editSelectedChatItem();
+    void deleteSelectedChatItems();
     void generateTtsSpeech();
     void onTtsListRowChanged(int row);
     void onTtsListActivated(const QModelIndex &index);

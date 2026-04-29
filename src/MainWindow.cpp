@@ -3,12 +3,15 @@
 #include "ui_MainWindow.h"
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
+#include <algorithm>
 
 /**
  * @brief コンストラクタ
@@ -63,6 +66,8 @@ void MainWindow::connectSignals() {
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
     connect(ui->chatDisplay, &QListView::clicked, this,
             &MainWindow::onChatDisplayClicked);
+    connect(ui->chatDisplay, &QWidget::customContextMenuRequested, this,
+            &MainWindow::onChatDisplayContextMenu);
 
     connect(ui->actionAbout, &QAction::triggered, this, [this]() {
         QMessageBox::about(
@@ -517,6 +522,99 @@ void MainWindow::onPlayTtsClicked() {
  */
 void MainWindow::onChatDisplayClicked(const QModelIndex &index) {
     Q_UNUSED(index);
+    syncTtsButtons();
+}
+
+/**
+ * @brief チャットディスプレイの右クリックメニューを表示
+ * 単一選択時は「編集」「削除」、複数選択時は「削除」のみを表示する
+ */
+void MainWindow::onChatDisplayContextMenu(const QPoint &pos) {
+    auto *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+
+    // 右クリック位置のアイテムが現在の選択に含まれていなければ、
+    // そのアイテムだけを単一選択し直す（一般的な GUI の挙動に合わせる）
+    QModelIndex clickedIndex = ui->chatDisplay->indexAt(pos);
+    if (clickedIndex.isValid() && !selectionModel->isSelected(clickedIndex)) {
+        selectionModel->select(clickedIndex, QItemSelectionModel::ClearAndSelect |
+                                                 QItemSelectionModel::Rows);
+        ui->chatDisplay->setCurrentIndex(clickedIndex);
+    }
+
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.isEmpty()) {
+        return;
+    }
+
+    QMenu menu(this);
+    if (selected.size() == 1) {
+        QAction *editAction = menu.addAction("編集");
+        connect(editAction, &QAction::triggered, this,
+                &MainWindow::editSelectedChatItem);
+    }
+    QAction *deleteAction = menu.addAction("削除");
+    connect(deleteAction, &QAction::triggered, this,
+            &MainWindow::deleteSelectedChatItems);
+
+    menu.exec(ui->chatDisplay->viewport()->mapToGlobal(pos));
+}
+
+/**
+ * @brief 選択中のチャットアイテムを編集する
+ * 単一選択時のみ有効
+ */
+void MainWindow::editSelectedChatItem() {
+    auto *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.size() != 1) {
+        return;
+    }
+
+    QModelIndex idx = selected.first();
+    QString current = m_model->data(idx).toString();
+    bool ok = false;
+    QString newText = QInputDialog::getMultiLineText(
+        this, "メッセージを編集", "メッセージ:", current, &ok);
+    if (!ok) {
+        return;
+    }
+    m_model->setData(idx, newText);
+    syncTtsButtons();
+}
+
+/**
+ * @brief 選択中のチャットアイテムを削除する
+ * 単一・複数選択どちらでも動作する（確認なし・即時削除）
+ */
+void MainWindow::deleteSelectedChatItems() {
+    auto *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.isEmpty()) {
+        return;
+    }
+
+    // 後ろから削除して、行番号がずれるのを防ぐ
+    QList<int> rows;
+    rows.reserve(selected.size());
+    for (const QModelIndex &idx : selected) {
+        rows.append(idx.row());
+    }
+    std::sort(rows.begin(), rows.end(), std::greater<int>());
+
+    for (int row : rows) {
+        m_model->removeRow(row);
+    }
+
+    m_pendingTtsText.clear();
     syncTtsButtons();
 }
 
