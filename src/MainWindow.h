@@ -34,7 +34,6 @@ public slots:
     void onApiRequestFinished();
     void onProfileChanged(const SystemPromptProfile &profile);
     void onProfileListChanged();
-    void syncTtsButtons();
     void showStatusMessage(const QString &status);
     QString getPendingTtsText() const;
     void appendTtsOutput(QString const &filePath);
@@ -53,11 +52,10 @@ signals:
 private slots:
     void onSendClicked();
     void onProfileComboActivated(int index);
-    void onPlayTtsClicked();
-    void onChatDisplayClicked(const QModelIndex &index);
     void onChatDisplayContextMenu(const QPoint &pos);
     void editSelectedChatItem();
     void deleteSelectedChatItems();
+    void playSelectedChatItems();
     void generateTtsSpeech();
     void onTtsListRowChanged(int row);
     void onTtsListActivated(const QModelIndex &index);

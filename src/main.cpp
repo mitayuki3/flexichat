@@ -135,10 +135,6 @@ int main(int argc, char *argv[]) {
     QObject::connect(&mainWindow, &MainWindow::ttsFileActivated, audioPlayer,
                      playAudioSource);
 
-    // オーディオプレイヤー状態同期
-    QObject::connect(audioPlayer, &QMediaPlayer::playingChanged, &mainWindow,
-                     &MainWindow::syncTtsButtons);
-
     QObject::connect(workerThread, &QThread::finished, logic,
                      &QObject::deleteLater);
     QObject::connect(&app, &QCoreApplication::aboutToQuit, workerThread,

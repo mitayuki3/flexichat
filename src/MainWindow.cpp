@@ -139,8 +139,6 @@ void MainWindow::connectSignals() {
                 emit autoplayChanged(state == Qt::Checked);
     });
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
-    connect(ui->chatDisplay, &QListView::clicked, this,
-            &MainWindow::onChatDisplayClicked);
     connect(ui->chatDisplay, &QWidget::customContextMenuRequested, this,
             &MainWindow::onChatDisplayContextMenu);
 
@@ -154,16 +152,6 @@ void MainWindow::connectSignals() {
             &MainWindow::onSendClicked);
     connect(ui->inputField, &QLineEdit::returnPressed, this,
             &MainWindow::onSendClicked);
-
-    // TTS ボタンの接続
-    connect(ui->playTtsButton, &QPushButton::clicked, this,
-            &MainWindow::onPlayTtsClicked);
-
-    connect(ui->chatDisplay, &QListView::activated, this,
-            [this](const QModelIndex &index) {
-                this->m_pendingTtsText = this->m_model->data(index).toString();
-        this->syncTtsButtons();
-    });
 
     connect(ui->profileCombo, QOverload<int>::of(&QComboBox::activated), this,
             &MainWindow::onProfileComboActivated);
@@ -486,8 +474,6 @@ void MainWindow::onReplyReceived(const QString &reply) {
     ui->inputField->setEnabled(true);
     ui->sendButton->setEnabled(true);
     ui->inputField->setFocus();
-
-    syncTtsButtons();
 }
 
 /**
@@ -565,48 +551,11 @@ void MainWindow::appendErrorMessage(const QString &message) {
 }
 
 /**
- * @brief 音声再生ボタンクリック時
- * 選択中のメッセージを TTS で再生（シグナル経由）
- */
-void MainWindow::onPlayTtsClicked() {
-    QModelIndexList selected =
-        ui->chatDisplay->selectionModel()->selectedIndexes();
-    if (selected.isEmpty()) {
-        onErrorOccurred("チャット履歴から再生したい発言を選択してください。");
-        return;
-    }
-
-    QString text = m_model->data(selected.first()).toString();
-    if (text.isEmpty()) {
-        return;
-    }
-
-    // AI の発言のみ再生可能
-    if (text.startsWith("You:")) {
-        onErrorOccurred(
-            "You の発言は再生できません。AI の発言を選択してください。");
-        return;
-    }
-
-    // テキストを保存
-    m_pendingTtsText = text.startsWith("AI: ") ? text.mid(4) : text;
-
-    // シグナルで TTS クライアントに送信（保存したテキストを使用）
-    emit synthesizeRequested(m_pendingTtsText);
-}
-
-/**
- * @brief チャットディスプレイクリック時
- * 選択ボタンの同期
- */
-void MainWindow::onChatDisplayClicked(const QModelIndex &index) {
-    Q_UNUSED(index);
-    syncTtsButtons();
-}
-
-/**
  * @brief チャットディスプレイの右クリックメニューを表示
- * 単一選択時は「編集」「削除」、複数選択時は「削除」のみを表示する
+ *
+ * - 単一選択時: 編集 / 削除 を表示。アシスタント発話なら音声合成も追加
+ * - 複数選択時: 削除 を表示。アシスタント発話が 1 件以上含まれる場合は
+ *   音声合成も追加
  */
 void MainWindow::onChatDisplayContextMenu(const QPoint &pos) {
     auto *selectionModel = ui->chatDisplay->selectionModel();
@@ -628,6 +577,15 @@ void MainWindow::onChatDisplayContextMenu(const QPoint &pos) {
         return;
     }
 
+    // 選択中にアシスタント発話が 1 件でもあれば音声合成可
+    bool hasAssistant = false;
+    for (const QModelIndex &idx : selected) {
+        if (m_model->data(idx).toString().startsWith(kAssistantPrefix)) {
+            hasAssistant = true;
+            break;
+        }
+    }
+
     QMenu menu(this);
     if (selected.size() == 1) {
         QAction *editAction = menu.addAction("編集");
@@ -637,6 +595,11 @@ void MainWindow::onChatDisplayContextMenu(const QPoint &pos) {
     QAction *deleteAction = menu.addAction("削除");
     connect(deleteAction, &QAction::triggered, this,
             &MainWindow::deleteSelectedChatItems);
+    if (hasAssistant) {
+        QAction *playAction = menu.addAction("音声合成");
+        connect(playAction, &QAction::triggered, this,
+                &MainWindow::playSelectedChatItems);
+    }
 
     menu.exec(ui->chatDisplay->viewport()->mapToGlobal(pos));
 }
@@ -664,7 +627,6 @@ void MainWindow::editSelectedChatItem() {
         return;
     }
     m_model->setData(idx, newText);
-    syncTtsButtons();
 }
 
 /**
@@ -692,9 +654,48 @@ void MainWindow::deleteSelectedChatItems() {
     for (int row : rows) {
         m_model->removeRow(row);
     }
+}
 
-    m_pendingTtsText.clear();
-    syncTtsButtons();
+/**
+ * @brief 選択中のアシスタント発話を音声合成する
+ *
+ * 選択行のうち kAssistantPrefix で始まる行のみをプレフィックスを取り除いて
+ * 抽出する。1 件なら synthesizeRequested、複数件なら synthesizeMultipleRequested
+ * を emit する。
+ */
+void MainWindow::playSelectedChatItems() {
+    auto *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.isEmpty()) {
+        return;
+    }
+
+    // 行順を保つために選択インデックスを行番号で昇順ソート
+    std::sort(selected.begin(), selected.end(),
+              [](const QModelIndex &a, const QModelIndex &b) {
+                  return a.row() < b.row();
+              });
+
+    QStringList texts;
+    texts.reserve(selected.size());
+    for (const QModelIndex &idx : selected) {
+        const QString text = m_model->data(idx).toString();
+        if (text.startsWith(kAssistantPrefix)) {
+            texts.append(text.mid(kAssistantPrefix.size()));
+        }
+    }
+
+    if (texts.isEmpty()) {
+        return;
+    }
+    if (texts.size() == 1) {
+        emit synthesizeRequested(texts.first());
+    } else {
+        emit synthesizeMultipleRequested(texts);
+    }
 }
 
 /**
@@ -718,16 +719,6 @@ void MainWindow::generateTtsSpeech() {
     } else {
         emit synthesizeRequested(m_pendingTtsText);
     }
-}
-
-/**
- * @brief TTS ボタンの同期
- * 再生中かどうかでボタン状態を切り替え（シグナル経由）
- */
-void MainWindow::syncTtsButtons() {
-    // TTS クライアントのステータスは main.cpp からシグナルで更新
-    // 再生中でなければ再生ボタン有効
-    ui->playTtsButton->setEnabled(m_pendingTtsText.isEmpty() == false);
 }
 
 /**
