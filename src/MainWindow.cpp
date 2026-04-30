@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ChatListModel.h"
 #include "ProfileManager.h"
 #include "ui_MainWindow.h"
 #include <QComboBox>
@@ -13,80 +14,6 @@
 #include <QSpinBox>
 #include <algorithm>
 
-namespace {
-
-constexpr QLatin1String kUserPrefix("You: ");
-constexpr QLatin1String kAssistantPrefix("AI: ");
-
-/**
- * @brief role に対応する表示プレフィックスを返す
- *
- * 表示への挿入と表示からの抽出で同じ対応表を使うための単一の参照点。
- */
-QLatin1String prefixForRole(ChatMessage::Role role) {
-    switch (role) {
-    case ChatMessage::Role::User:
-        return kUserPrefix;
-    case ChatMessage::Role::Assistant:
-        return kAssistantPrefix;
-    }
-    Q_UNREACHABLE();
-}
-
-/**
- * @brief 表示モデルの末尾に 1 行追加する
- */
-void appendLine(QStringListModel *model, const QString &line) {
-    const int row = model->rowCount();
-    model->insertRow(row);
-    model->setData(model->index(row), line);
-}
-
-/**
- * @brief role 付きのチャット行を表示モデルに追加する
- */
-void appendChatLine(QStringListModel *model, ChatMessage::Role role,
-                    const QString &message) {
-    appendLine(model, prefixForRole(role) + message);
-}
-
-/**
- * @brief role を持たない生のメッセージ行（エラー等）を追加する
- */
-void appendRawLine(QStringListModel *model, const QString &message) {
-    appendLine(model, message);
-}
-
-/**
- * @brief チャット表示モデルの内容から API 送信用の ChatHistory を作る
- *
- * 表示モデルの各行を `kUserPrefix` で始まれば user、`kAssistantPrefix`
- * で始まれば assistant メッセージとして扱う。エラー行など、それ以外の
- * 行は履歴に含めない。表示形式と履歴データ構造の境界を MainWindow 内に
- * 閉じ込めるためのフリー関数。
- */
-ChatHistory chatHistoryFromListModel(const QStringListModel *model) {
-    ChatHistory history;
-    if (!model) {
-        return history;
-    }
-    const int rowCount = model->rowCount();
-    history.reserve(rowCount);
-    for (int i = 0; i < rowCount; ++i) {
-        const QString text = model->data(model->index(i)).toString();
-        if (text.startsWith(kUserPrefix)) {
-            history.append({ChatMessage::Role::User, text.mid(kUserPrefix.size())});
-        } else if (text.startsWith(kAssistantPrefix)) {
-            history.append(
-                {ChatMessage::Role::Assistant, text.mid(kAssistantPrefix.size())});
-        }
-        // それ以外（エラー等）は履歴に含めない
-    }
-    return history;
-}
-
-} // namespace
-
 /**
  * @brief コンストラクタ
  * UI のセットアップを行う
@@ -94,7 +21,7 @@ ChatHistory chatHistoryFromListModel(const QStringListModel *model) {
  */
 MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
-    m_profileManager(profileManager), m_model(new QStringListModel(this)),
+    m_profileManager(profileManager), m_model(new ChatListModel(this)),
     m_lastAssistantMessage(""), m_pendingTtsText(""),
     m_profileCommitTimer(new QTimer(this)) {
     ui->setupUi(this);
@@ -459,7 +386,7 @@ void MainWindow::onSendClicked() {
 
     // チャット表示モデルを Single Source of Truth として、
     // 現時点のチャット履歴を抽出して送信する
-    emit requestSend(chatHistoryFromListModel(m_model));
+    emit requestSend(m_model->toChatHistory());
 }
 
 /**
@@ -528,7 +455,7 @@ void MainWindow::setupUI() {
  * @brief ユーザー発話をチャット表示に追加
  */
 void MainWindow::appendUserMessage(const QString &message) {
-    appendChatLine(m_model, ChatMessage::Role::User, message);
+    m_model->appendUserMessage(message);
     ui->chatDisplay->scrollToBottom();
 }
 
@@ -536,7 +463,7 @@ void MainWindow::appendUserMessage(const QString &message) {
  * @brief アシスタント応答をチャット表示に追加
  */
 void MainWindow::appendAssistantMessage(const QString &message) {
-    appendChatLine(m_model, ChatMessage::Role::Assistant, message);
+    m_model->appendAssistantMessage(message);
     ui->chatDisplay->scrollToBottom();
 }
 
@@ -544,7 +471,7 @@ void MainWindow::appendAssistantMessage(const QString &message) {
  * @brief エラー等の生メッセージをチャット表示に追加
  */
 void MainWindow::appendErrorMessage(const QString &message) {
-    appendRawLine(m_model, message);
+    m_model->appendErrorMessage(message);
     ui->chatDisplay->scrollToBottom();
 }
 
@@ -578,7 +505,7 @@ void MainWindow::onChatDisplayContextMenu(const QPoint &pos) {
     // 選択中にアシスタント発話が 1 件でもあれば音声合成可
     bool hasAssistant = false;
     for (const QModelIndex &idx : selected) {
-        if (m_model->data(idx).toString().startsWith(kAssistantPrefix)) {
+        if (m_model->isAssistantRow(idx.row())) {
             hasAssistant = true;
             break;
         }
@@ -617,14 +544,14 @@ void MainWindow::editSelectedChatItem() {
     }
 
     QModelIndex idx = selected.first();
-    QString current = m_model->data(idx).toString();
+    QString current = m_model->data(idx, ChatListModel::ContentRole).toString();
     bool ok = false;
     QString newText = QInputDialog::getMultiLineText(this, "メッセージを編集",
                                                      "メッセージ:", current, &ok);
     if (!ok) {
         return;
     }
-    m_model->setData(idx, newText);
+    m_model->setData(idx, newText, ChatListModel::ContentRole);
 }
 
 /**
@@ -680,9 +607,8 @@ void MainWindow::playSelectedChatItems() {
     QStringList texts;
     texts.reserve(selected.size());
     for (const QModelIndex &idx : selected) {
-        const QString text = m_model->data(idx).toString();
-        if (text.startsWith(kAssistantPrefix)) {
-            texts.append(text.mid(kAssistantPrefix.size()));
+        if (m_model->isAssistantRow(idx.row())) {
+            texts.append(m_model->contentAt(idx.row()));
         }
     }
 

@@ -3,7 +3,6 @@
 #include "ChatMessage.h"
 #include <QComboBox>
 #include <QMainWindow>
-#include <QStringListModel>
 #include <QTimer>
 
 QT_BEGIN_NAMESPACE
@@ -12,6 +11,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
+class ChatListModel;
 class ProfileManager;
 struct SystemPromptProfile;
 
@@ -69,7 +69,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     ProfileManager *m_profileManager;
-    QStringListModel *m_model;
+    ChatListModel *m_model;
     QString m_lastAssistantMessage;
     QString m_pendingTtsText;
     QString m_displayedProfileId;
