@@ -107,8 +107,8 @@ int main(int argc, char *argv[]) {
     // TTS シグナルの接続（MainWindow → MainLogic）
     QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, logic,
                      &MainLogic::synthesize);
-    QObject::connect(&mainWindow, &MainWindow::synthesizeMultipleRequested,
-                     logic, &MainLogic::synthesizeMultiple);
+    QObject::connect(&mainWindow, &MainWindow::synthesizeMultipleRequested, logic,
+                     &MainLogic::synthesizeMultiple);
     QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, audioPlayer,
                      &QMediaPlayer::play);
 

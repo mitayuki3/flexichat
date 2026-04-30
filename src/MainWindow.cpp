@@ -75,11 +75,10 @@ ChatHistory chatHistoryFromListModel(const QStringListModel *model) {
     for (int i = 0; i < rowCount; ++i) {
         const QString text = model->data(model->index(i)).toString();
         if (text.startsWith(kUserPrefix)) {
-            history.append({ChatMessage::Role::User,
-                            text.mid(kUserPrefix.size())});
+            history.append({ChatMessage::Role::User, text.mid(kUserPrefix.size())});
         } else if (text.startsWith(kAssistantPrefix)) {
-            history.append({ChatMessage::Role::Assistant,
-                            text.mid(kAssistantPrefix.size())});
+            history.append(
+                {ChatMessage::Role::Assistant, text.mid(kAssistantPrefix.size())});
         }
         // それ以外（エラー等）は履歴に含めない
     }
@@ -248,8 +247,8 @@ void MainWindow::updateTrashButton() {
     // タブタイトルに件数を表示
     int trashTabIndex = ui->tabWidget->indexOf(ui->trashTab);
     if (trashTabIndex >= 0) {
-        ui->tabWidget->setTabText(
-            trashTabIndex, n > 0 ? QString("ゴミ箱 (%1)").arg(n) : "ゴミ箱");
+        ui->tabWidget->setTabText(trashTabIndex,
+                                  n > 0 ? QString("ゴミ箱 (%1)").arg(n) : "ゴミ箱");
     }
 
     ui->emptyTrashButton->setEnabled(n > 0);
@@ -396,8 +395,8 @@ void MainWindow::onTrashProfileClicked() {
         return;
     }
     if (m_profileManager->getAllProfiles().size() <= 1) {
-        ui->statusbar->showMessage(
-            "最後のプロファイルはゴミ箱に入れられません", 3000);
+        ui->statusbar->showMessage("最後のプロファイルはゴミ箱に入れられません",
+                                   3000);
         return;
     }
 
@@ -408,8 +407,7 @@ void MainWindow::onTrashProfileClicked() {
     auto active = m_profileManager->getActiveProfile();
     m_profileManager->trashProfile(id);
     ui->statusbar->showMessage(
-        QString("「%1」をゴミ箱に移動しました").arg(active.displayName()),
-        3000);
+        QString("「%1」をゴミ箱に移動しました").arg(active.displayName()), 3000);
 }
 
 /**
@@ -421,8 +419,8 @@ void MainWindow::onEmptyTrashClicked() {
         return;
     }
     m_profileManager->emptyTrash();
-    ui->statusbar->showMessage(
-        QString("ゴミ箱を空にしました (%1 件削除)").arg(n), 3000);
+    ui->statusbar->showMessage(QString("ゴミ箱を空にしました (%1 件削除)").arg(n),
+                               3000);
 }
 
 /**
@@ -440,8 +438,8 @@ void MainWindow::onRestoreTrashedClicked() {
     auto *p = m_profileManager->getProfileById(id);
     QString name = p ? p->displayName() : id;
     m_profileManager->restoreProfile(id);
-    ui->statusbar->showMessage(
-        QString("「%1」をゴミ箱から戻しました").arg(name), 3000);
+    ui->statusbar->showMessage(QString("「%1」をゴミ箱から戻しました").arg(name),
+                               3000);
 }
 
 /**
@@ -621,8 +619,8 @@ void MainWindow::editSelectedChatItem() {
     QModelIndex idx = selected.first();
     QString current = m_model->data(idx).toString();
     bool ok = false;
-    QString newText = QInputDialog::getMultiLineText(
-        this, "メッセージを編集", "メッセージ:", current, &ok);
+    QString newText = QInputDialog::getMultiLineText(this, "メッセージを編集",
+                                                     "メッセージ:", current, &ok);
     if (!ok) {
         return;
     }
@@ -660,8 +658,8 @@ void MainWindow::deleteSelectedChatItems() {
  * @brief 選択中のアシスタント発話を音声合成する
  *
  * 選択行のうち kAssistantPrefix で始まる行のみをプレフィックスを取り除いて
- * 抽出する。1 件なら synthesizeRequested、複数件なら synthesizeMultipleRequested
- * を emit する。
+ * 抽出する。1 件なら synthesizeRequested、複数件なら
+ * synthesizeMultipleRequested を emit する。
  */
 void MainWindow::playSelectedChatItems() {
     auto *selectionModel = ui->chatDisplay->selectionModel();
@@ -676,8 +674,8 @@ void MainWindow::playSelectedChatItems() {
     // 行順を保つために選択インデックスを行番号で昇順ソート
     std::sort(selected.begin(), selected.end(),
               [](const QModelIndex &a, const QModelIndex &b) {
-                  return a.row() < b.row();
-              });
+        return a.row() < b.row();
+    });
 
     QStringList texts;
     texts.reserve(selected.size());
