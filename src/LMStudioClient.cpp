@@ -33,7 +33,13 @@ LMStudioClient::~LMStudioClient() = default;
 
 /**
  * @brief チャットリクエストの送信
- * @param history 送信するチャット履歴
+ * @param history 送信するチャット履歴（system プロンプトを除く user /
+ *                assistant メッセージの JSON 配列）。最後の要素が今回送る
+ *                ユーザーメッセージとなる。
+ *
+ * チャット履歴はクライアント内部に保持しない。呼び出し側
+ * （MainWindow の表示モデル）を Single Source of Truth として、
+ * 毎回その時点の履歴を渡す。
  */
 void LMStudioClient::sendRequest(const QJsonArray &history) {
     // メッセージ配列の構築
