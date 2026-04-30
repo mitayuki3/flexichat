@@ -34,14 +34,15 @@ LMStudioClient::~LMStudioClient() = default;
 /**
  * @brief チャットリクエストの送信
  * @param history 送信するチャット履歴（system プロンプトを除く user /
- *                assistant メッセージの JSON 配列）。最後の要素が今回送る
- *                ユーザーメッセージとなる。
+ *                assistant メッセージ列）。最後の要素が今回送るユーザー
+ *                メッセージとなる。
  *
- * チャット履歴はクライアント内部に保持しない。呼び出し側
- * （MainWindow の表示モデル）を Single Source of Truth として、
- * 毎回その時点の履歴を渡す。
+ * チャット履歴はクライアント内部に保持しない。呼び出し側（UI 表示モデル）
+ * を Single Source of Truth として、毎回その時点の履歴を渡す。
+ * JSON への変換は本関数内に閉じ込め、呼び出し側に API のシリアライズ形式を
+ * 漏らさない。
  */
-void LMStudioClient::sendRequest(const QJsonArray &history) {
+void LMStudioClient::sendRequest(const ChatHistory &history) {
     // メッセージ配列の構築
     QJsonArray messages;
 
@@ -53,9 +54,12 @@ void LMStudioClient::sendRequest(const QJsonArray &history) {
         messages.append(sysMsg);
     }
 
-    // 呼び出し側から渡された履歴をそのまま追加
-    for (const auto &historyMsg : history) {
-        messages.append(historyMsg.toObject());
+    // 呼び出し側から渡された履歴を JSON に変換して追加
+    for (const ChatMessage &msg : history) {
+        QJsonObject obj;
+        obj["role"] = msg.role;
+        obj["content"] = msg.content;
+        messages.append(obj);
     }
 
     // リクエストボディの作成

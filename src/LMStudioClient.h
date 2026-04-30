@@ -1,7 +1,7 @@
 #pragma once
 
+#include "ChatMessage.h"
 #include "SystemPromptProfile.h"
-#include <QJsonArray>
 #include <QNetworkReply>
 #include <QObject>
 
@@ -18,7 +18,7 @@ public:
     explicit LMStudioClient(QObject *parent = nullptr);
     ~LMStudioClient() override;
 
-    void sendRequest(const QJsonArray &history);
+    void sendRequest(const ChatHistory &history);
     void setProfile(const SystemPromptProfile &profile);
     void setBaseUrl(const QString &url);
     void testConnection();

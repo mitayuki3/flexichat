@@ -1,7 +1,7 @@
 #pragma once
 
+#include "ChatMessage.h"
 #include <QComboBox>
-#include <QJsonArray>
 #include <QMainWindow>
 #include <QStringListModel>
 #include <QTimer>
@@ -40,7 +40,7 @@ public slots:
     void appendTtsOutput(QString const &filePath);
 
 signals:
-    void requestSend(const QJsonArray &history);
+    void requestSend(const ChatHistory &history);
     void profileChangeRequested(const QString &profileId);
     void synthesizeRequested(const QString &text);
     void synthesizeMultipleRequested(QStringList const &list);
@@ -82,7 +82,6 @@ private:
     void setupUI();
     void connectSignals();
     void appendMessage(const QString &role, const QString &message);
-    QJsonArray buildChatHistoryFromModel() const;
     void populateProfileCombo();
     void loadProfileIntoEditor(const SystemPromptProfile &profile);
     void populateTrashList();

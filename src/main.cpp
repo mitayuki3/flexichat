@@ -1,4 +1,5 @@
 #include "AppSettings.h"
+#include "ChatMessage.h"
 #include "LMStudioClient.h"
 #include "MainLogic.h"
 #include "MainWindow.h"
@@ -18,6 +19,7 @@ int main(int argc, char *argv[]) {
     app.setApplicationVersion("1.0.0");
 
     qRegisterMetaType<TtsSettingsData>();
+    qRegisterMetaType<ChatHistory>("ChatHistory");
 
     QThread *workerThread = new QThread(&app);
 

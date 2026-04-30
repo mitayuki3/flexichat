@@ -15,6 +15,7 @@ find_package(Qt6 6.7 REQUIRED COMPONENTS
 set(PROJECT_SOURCES
     src/AppSettings.cpp
     src/AppSettings.h
+    src/ChatMessage.h
     src/LMStudioClient.cpp
     src/LMStudioClient.h
     src/main.cpp

@@ -4,7 +4,6 @@
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QInputDialog>
-#include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -13,6 +12,42 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <algorithm>
+
+namespace {
+
+constexpr QLatin1String kUserPrefix("You: ");
+constexpr QLatin1String kAssistantPrefix("AI: ");
+
+/**
+ * @brief チャット表示モデルの内容から API 送信用の ChatHistory を作る
+ *
+ * 表示モデルの各行を `"You: "` で始まれば user、`"AI: "` で始まれば
+ * assistant メッセージとして扱う。エラー行など、それ以外の行は履歴に
+ * 含めない。表示形式と履歴データ構造の境界を MainWindow 内に閉じ込める
+ * ためのフリー関数。
+ */
+ChatHistory chatHistoryFromListModel(const QStringListModel *model) {
+    ChatHistory history;
+    if (!model) {
+        return history;
+    }
+    const int rowCount = model->rowCount();
+    history.reserve(rowCount);
+    for (int i = 0; i < rowCount; ++i) {
+        const QString text = model->data(model->index(i)).toString();
+        if (text.startsWith(kUserPrefix)) {
+            history.append({QStringLiteral("user"),
+                            text.mid(kUserPrefix.size())});
+        } else if (text.startsWith(kAssistantPrefix)) {
+            history.append({QStringLiteral("assistant"),
+                            text.mid(kAssistantPrefix.size())});
+        }
+        // それ以外（エラー等）は履歴に含めない
+    }
+    return history;
+}
+
+} // namespace
 
 /**
  * @brief コンストラクタ
@@ -399,7 +434,7 @@ void MainWindow::onSendClicked() {
 
     // チャット表示モデルを Single Source of Truth として、
     // 現時点のチャット履歴を抽出して送信する
-    emit requestSend(buildChatHistoryFromModel());
+    emit requestSend(chatHistoryFromListModel(m_model));
 }
 
 /**
@@ -619,33 +654,6 @@ void MainWindow::deleteSelectedChatItems() {
 
     m_pendingTtsText.clear();
     syncTtsButtons();
-}
-
-/**
- * @brief 現在のチャット表示モデルから API 送信用のチャット履歴を再構築する
- *
- * "You: " で始まる行は user メッセージ、"AI: " で始まる行は assistant
- * メッセージとして扱う。エラーメッセージなど、それ以外の行は履歴に含めない。
- */
-QJsonArray MainWindow::buildChatHistoryFromModel() const {
-    QJsonArray history;
-    const int rowCount = m_model->rowCount();
-    for (int i = 0; i < rowCount; ++i) {
-        QString text = m_model->data(m_model->index(i)).toString();
-        QJsonObject msg;
-        if (text.startsWith("You: ")) {
-            msg["role"] = "user";
-            msg["content"] = text.mid(5);
-        } else if (text.startsWith("AI: ")) {
-            msg["role"] = "assistant";
-            msg["content"] = text.mid(4);
-        } else {
-            // エラー等、API へ送信すべきでない行はスキップ
-            continue;
-        }
-        history.append(msg);
-    }
-    return history;
 }
 
 /**
