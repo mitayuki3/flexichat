@@ -81,7 +81,9 @@ private:
 
     void setupUI();
     void connectSignals();
-    void appendMessage(const QString &role, const QString &message);
+    void appendUserMessage(const QString &message);
+    void appendAssistantMessage(const QString &message);
+    void appendErrorMessage(const QString &message);
     void populateProfileCombo();
     void loadProfileIntoEditor(const SystemPromptProfile &profile);
     void populateTrashList();

@@ -19,12 +19,51 @@ constexpr QLatin1String kUserPrefix("You: ");
 constexpr QLatin1String kAssistantPrefix("AI: ");
 
 /**
+ * @brief role に対応する表示プレフィックスを返す
+ *
+ * 表示への挿入と表示からの抽出で同じ対応表を使うための単一の参照点。
+ */
+QLatin1String prefixForRole(ChatMessage::Role role) {
+    switch (role) {
+    case ChatMessage::Role::User:
+        return kUserPrefix;
+    case ChatMessage::Role::Assistant:
+        return kAssistantPrefix;
+    }
+    Q_UNREACHABLE();
+}
+
+/**
+ * @brief 表示モデルの末尾に 1 行追加する
+ */
+void appendLine(QStringListModel *model, const QString &line) {
+    const int row = model->rowCount();
+    model->insertRow(row);
+    model->setData(model->index(row), line);
+}
+
+/**
+ * @brief role 付きのチャット行を表示モデルに追加する
+ */
+void appendChatLine(QStringListModel *model, ChatMessage::Role role,
+                    const QString &message) {
+    appendLine(model, prefixForRole(role) + message);
+}
+
+/**
+ * @brief role を持たない生のメッセージ行（エラー等）を追加する
+ */
+void appendRawLine(QStringListModel *model, const QString &message) {
+    appendLine(model, message);
+}
+
+/**
  * @brief チャット表示モデルの内容から API 送信用の ChatHistory を作る
  *
- * 表示モデルの各行を `"You: "` で始まれば user、`"AI: "` で始まれば
- * assistant メッセージとして扱う。エラー行など、それ以外の行は履歴に
- * 含めない。表示形式と履歴データ構造の境界を MainWindow 内に閉じ込める
- * ためのフリー関数。
+ * 表示モデルの各行を `kUserPrefix` で始まれば user、`kAssistantPrefix`
+ * で始まれば assistant メッセージとして扱う。エラー行など、それ以外の
+ * 行は履歴に含めない。表示形式と履歴データ構造の境界を MainWindow 内に
+ * 閉じ込めるためのフリー関数。
  */
 ChatHistory chatHistoryFromListModel(const QStringListModel *model) {
     ChatHistory history;
@@ -426,7 +465,7 @@ void MainWindow::onSendClicked() {
         return;
     }
 
-    appendMessage("user", message);
+    appendUserMessage(message);
 
     ui->inputField->clear();
     ui->inputField->setEnabled(false);
@@ -441,7 +480,7 @@ void MainWindow::onSendClicked() {
  * @brief AI からの応答を受信したときの処理
  */
 void MainWindow::onReplyReceived(const QString &reply) {
-    appendMessage("assistant", reply);
+    appendAssistantMessage(reply);
     m_lastAssistantMessage = reply;
 
     ui->inputField->setEnabled(true);
@@ -455,7 +494,7 @@ void MainWindow::onReplyReceived(const QString &reply) {
  * @brief エラーが発生したときの処理
  */
 void MainWindow::onErrorOccurred(const QString &error) {
-    appendMessage("error", "エラー: " + error);
+    appendErrorMessage("エラー: " + error);
 
     ui->inputField->setEnabled(true);
     ui->sendButton->setEnabled(true);
@@ -502,24 +541,26 @@ void MainWindow::setupUI() {
 }
 
 /**
- * @brief メッセージをチャット表示に追加
- * @param role 役割 (user/assistant/error)
- * @param message メッセージ内容
+ * @brief ユーザー発話をチャット表示に追加
  */
-void MainWindow::appendMessage(const QString &role, const QString &message) {
-    QString displayMessage;
-    if (role == "user") {
-        displayMessage = QString("You: %1").arg(message);
-    } else if (role == "assistant") {
-        displayMessage = QString("AI: %1").arg(message);
-    } else {
-        displayMessage = message;
-    }
+void MainWindow::appendUserMessage(const QString &message) {
+    appendChatLine(m_model, ChatMessage::Role::User, message);
+    ui->chatDisplay->scrollToBottom();
+}
 
-    int row = m_model->rowCount();
-    m_model->insertRow(row);
-    m_model->setData(m_model->index(row), displayMessage);
+/**
+ * @brief アシスタント応答をチャット表示に追加
+ */
+void MainWindow::appendAssistantMessage(const QString &message) {
+    appendChatLine(m_model, ChatMessage::Role::Assistant, message);
+    ui->chatDisplay->scrollToBottom();
+}
 
+/**
+ * @brief エラー等の生メッセージをチャット表示に追加
+ */
+void MainWindow::appendErrorMessage(const QString &message) {
+    appendRawLine(m_model, message);
     ui->chatDisplay->scrollToBottom();
 }
 
