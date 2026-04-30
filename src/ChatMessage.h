@@ -10,11 +10,17 @@
  * LM Studio / OpenAI 互換 API のチャット完了 (chat completion)
  * リクエストにおける 1 件のメッセージを表現するインターフェース型。
  * UI 側の表示形式とは独立に、API 通信層に渡すための中立な構造として用いる。
+ *
+ * "system" ロールはプロファイルからクライアント側で別途付与されるため、
+ * ここでは User / Assistant のみを表す。
  */
 struct ChatMessage {
-    /// "user" または "assistant"（"system" はプロファイルから別途付与される）
-    QString role;
-    /// メッセージ本文
+    enum class Role {
+        User,
+        Assistant,
+    };
+
+    Role role = Role::User;
     QString content;
 };
 

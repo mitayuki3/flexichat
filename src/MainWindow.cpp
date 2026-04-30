@@ -36,10 +36,10 @@ ChatHistory chatHistoryFromListModel(const QStringListModel *model) {
     for (int i = 0; i < rowCount; ++i) {
         const QString text = model->data(model->index(i)).toString();
         if (text.startsWith(kUserPrefix)) {
-            history.append({QStringLiteral("user"),
+            history.append({ChatMessage::Role::User,
                             text.mid(kUserPrefix.size())});
         } else if (text.startsWith(kAssistantPrefix)) {
-            history.append({QStringLiteral("assistant"),
+            history.append({ChatMessage::Role::Assistant,
                             text.mid(kAssistantPrefix.size())});
         }
         // それ以外（エラー等）は履歴に含めない

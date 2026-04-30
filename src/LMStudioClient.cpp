@@ -57,7 +57,14 @@ void LMStudioClient::sendRequest(const ChatHistory &history) {
     // 呼び出し側から渡された履歴を JSON に変換して追加
     for (const ChatMessage &msg : history) {
         QJsonObject obj;
-        obj["role"] = msg.role;
+        switch (msg.role) {
+        case ChatMessage::Role::User:
+            obj["role"] = "user";
+            break;
+        case ChatMessage::Role::Assistant:
+            obj["role"] = "assistant";
+            break;
+        }
         obj["content"] = msg.content;
         messages.append(obj);
     }
