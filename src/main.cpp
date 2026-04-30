@@ -1,4 +1,5 @@
 #include "AppSettings.h"
+#include "ChatMessage.h"
 #include "LMStudioClient.h"
 #include "MainLogic.h"
 #include "MainWindow.h"
@@ -18,6 +19,7 @@ int main(int argc, char *argv[]) {
     app.setApplicationVersion("1.0.0");
 
     qRegisterMetaType<TtsSettingsData>();
+    qRegisterMetaType<ChatHistory>("ChatHistory");
 
     QThread *workerThread = new QThread(&app);
 
@@ -89,6 +91,8 @@ int main(int argc, char *argv[]) {
                      &AppSettings::saveTtsVoice);
 
     // MainWindow → LMStudioClient のシグナル仲介
+    // チャット履歴は MainWindow の表示モデルを Single Source of Truth として
+    // 毎回その時点のスナップショットを LMStudioClient に渡す
     QObject::connect(&mainWindow, &MainWindow::requestSend, client,
                      &LMStudioClient::sendRequest);
     QObject::connect(
@@ -103,8 +107,8 @@ int main(int argc, char *argv[]) {
     // TTS シグナルの接続（MainWindow → MainLogic）
     QObject::connect(&mainWindow, &MainWindow::synthesizeRequested, logic,
                      &MainLogic::synthesize);
-    QObject::connect(&mainWindow, &MainWindow::synthesizeMultipleRequested,
-                     logic, &MainLogic::synthesizeMultiple);
+    QObject::connect(&mainWindow, &MainWindow::synthesizeMultipleRequested, logic,
+                     &MainLogic::synthesizeMultiple);
     QObject::connect(&mainWindow, &MainWindow::ttsPlayRequested, audioPlayer,
                      &QMediaPlayer::play);
 
@@ -130,10 +134,6 @@ int main(int argc, char *argv[]) {
                      setAudioSource);
     QObject::connect(&mainWindow, &MainWindow::ttsFileActivated, audioPlayer,
                      playAudioSource);
-
-    // オーディオプレイヤー状態同期
-    QObject::connect(audioPlayer, &QMediaPlayer::playingChanged, &mainWindow,
-                     &MainWindow::syncTtsButtons);
 
     QObject::connect(workerThread, &QThread::finished, logic,
                      &QObject::deleteLater);

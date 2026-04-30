@@ -3,12 +3,89 @@
 #include "ui_MainWindow.h"
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
+#include <algorithm>
+
+namespace {
+
+constexpr QLatin1String kUserPrefix("You: ");
+constexpr QLatin1String kAssistantPrefix("AI: ");
+
+/**
+ * @brief role に対応する表示プレフィックスを返す
+ *
+ * 表示への挿入と表示からの抽出で同じ対応表を使うための単一の参照点。
+ */
+QLatin1String prefixForRole(ChatMessage::Role role) {
+    switch (role) {
+    case ChatMessage::Role::User:
+        return kUserPrefix;
+    case ChatMessage::Role::Assistant:
+        return kAssistantPrefix;
+    }
+    Q_UNREACHABLE();
+}
+
+/**
+ * @brief 表示モデルの末尾に 1 行追加する
+ */
+void appendLine(QStringListModel *model, const QString &line) {
+    const int row = model->rowCount();
+    model->insertRow(row);
+    model->setData(model->index(row), line);
+}
+
+/**
+ * @brief role 付きのチャット行を表示モデルに追加する
+ */
+void appendChatLine(QStringListModel *model, ChatMessage::Role role,
+                    const QString &message) {
+    appendLine(model, prefixForRole(role) + message);
+}
+
+/**
+ * @brief role を持たない生のメッセージ行（エラー等）を追加する
+ */
+void appendRawLine(QStringListModel *model, const QString &message) {
+    appendLine(model, message);
+}
+
+/**
+ * @brief チャット表示モデルの内容から API 送信用の ChatHistory を作る
+ *
+ * 表示モデルの各行を `kUserPrefix` で始まれば user、`kAssistantPrefix`
+ * で始まれば assistant メッセージとして扱う。エラー行など、それ以外の
+ * 行は履歴に含めない。表示形式と履歴データ構造の境界を MainWindow 内に
+ * 閉じ込めるためのフリー関数。
+ */
+ChatHistory chatHistoryFromListModel(const QStringListModel *model) {
+    ChatHistory history;
+    if (!model) {
+        return history;
+    }
+    const int rowCount = model->rowCount();
+    history.reserve(rowCount);
+    for (int i = 0; i < rowCount; ++i) {
+        const QString text = model->data(model->index(i)).toString();
+        if (text.startsWith(kUserPrefix)) {
+            history.append({ChatMessage::Role::User, text.mid(kUserPrefix.size())});
+        } else if (text.startsWith(kAssistantPrefix)) {
+            history.append(
+                {ChatMessage::Role::Assistant, text.mid(kAssistantPrefix.size())});
+        }
+        // それ以外（エラー等）は履歴に含めない
+    }
+    return history;
+}
+
+} // namespace
 
 /**
  * @brief コンストラクタ
@@ -61,8 +138,8 @@ void MainWindow::connectSignals() {
                 emit autoplayChanged(state == Qt::Checked);
     });
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
-    connect(ui->chatDisplay, &QListView::clicked, this,
-            &MainWindow::onChatDisplayClicked);
+    connect(ui->chatDisplay, &QWidget::customContextMenuRequested, this,
+            &MainWindow::onChatDisplayContextMenu);
 
     connect(ui->actionAbout, &QAction::triggered, this, [this]() {
         QMessageBox::about(
@@ -74,16 +151,6 @@ void MainWindow::connectSignals() {
             &MainWindow::onSendClicked);
     connect(ui->inputField, &QLineEdit::returnPressed, this,
             &MainWindow::onSendClicked);
-
-    // TTS ボタンの接続
-    connect(ui->playTtsButton, &QPushButton::clicked, this,
-            &MainWindow::onPlayTtsClicked);
-
-    connect(ui->chatDisplay, &QListView::activated, this,
-            [this](const QModelIndex &index) {
-                this->m_pendingTtsText = this->m_model->data(index).toString();
-        this->syncTtsButtons();
-    });
 
     connect(ui->profileCombo, QOverload<int>::of(&QComboBox::activated), this,
             &MainWindow::onProfileComboActivated);
@@ -180,8 +247,8 @@ void MainWindow::updateTrashButton() {
     // タブタイトルに件数を表示
     int trashTabIndex = ui->tabWidget->indexOf(ui->trashTab);
     if (trashTabIndex >= 0) {
-        ui->tabWidget->setTabText(
-            trashTabIndex, n > 0 ? QString("ゴミ箱 (%1)").arg(n) : "ゴミ箱");
+        ui->tabWidget->setTabText(trashTabIndex,
+                                  n > 0 ? QString("ゴミ箱 (%1)").arg(n) : "ゴミ箱");
     }
 
     ui->emptyTrashButton->setEnabled(n > 0);
@@ -328,8 +395,8 @@ void MainWindow::onTrashProfileClicked() {
         return;
     }
     if (m_profileManager->getAllProfiles().size() <= 1) {
-        ui->statusbar->showMessage(
-            "最後のプロファイルはゴミ箱に入れられません", 3000);
+        ui->statusbar->showMessage("最後のプロファイルはゴミ箱に入れられません",
+                                   3000);
         return;
     }
 
@@ -340,8 +407,7 @@ void MainWindow::onTrashProfileClicked() {
     auto active = m_profileManager->getActiveProfile();
     m_profileManager->trashProfile(id);
     ui->statusbar->showMessage(
-        QString("「%1」をゴミ箱に移動しました").arg(active.displayName()),
-        3000);
+        QString("「%1」をゴミ箱に移動しました").arg(active.displayName()), 3000);
 }
 
 /**
@@ -353,8 +419,8 @@ void MainWindow::onEmptyTrashClicked() {
         return;
     }
     m_profileManager->emptyTrash();
-    ui->statusbar->showMessage(
-        QString("ゴミ箱を空にしました (%1 件削除)").arg(n), 3000);
+    ui->statusbar->showMessage(QString("ゴミ箱を空にしました (%1 件削除)").arg(n),
+                               3000);
 }
 
 /**
@@ -372,8 +438,8 @@ void MainWindow::onRestoreTrashedClicked() {
     auto *p = m_profileManager->getProfileById(id);
     QString name = p ? p->displayName() : id;
     m_profileManager->restoreProfile(id);
-    ui->statusbar->showMessage(
-        QString("「%1」をゴミ箱から戻しました").arg(name), 3000);
+    ui->statusbar->showMessage(QString("「%1」をゴミ箱から戻しました").arg(name),
+                               3000);
 }
 
 /**
@@ -385,34 +451,34 @@ void MainWindow::onSendClicked() {
         return;
     }
 
-    appendMessage("user", message);
+    appendUserMessage(message);
 
     ui->inputField->clear();
     ui->inputField->setEnabled(false);
     ui->sendButton->setEnabled(false);
 
-    emit requestSend(message);
+    // チャット表示モデルを Single Source of Truth として、
+    // 現時点のチャット履歴を抽出して送信する
+    emit requestSend(chatHistoryFromListModel(m_model));
 }
 
 /**
  * @brief AI からの応答を受信したときの処理
  */
 void MainWindow::onReplyReceived(const QString &reply) {
-    appendMessage("assistant", reply);
+    appendAssistantMessage(reply);
     m_lastAssistantMessage = reply;
 
     ui->inputField->setEnabled(true);
     ui->sendButton->setEnabled(true);
     ui->inputField->setFocus();
-
-    syncTtsButtons();
 }
 
 /**
  * @brief エラーが発生したときの処理
  */
 void MainWindow::onErrorOccurred(const QString &error) {
-    appendMessage("error", "エラー: " + error);
+    appendErrorMessage("エラー: " + error);
 
     ui->inputField->setEnabled(true);
     ui->sendButton->setEnabled(true);
@@ -459,65 +525,175 @@ void MainWindow::setupUI() {
 }
 
 /**
- * @brief メッセージをチャット表示に追加
- * @param role 役割 (user/assistant/error)
- * @param message メッセージ内容
+ * @brief ユーザー発話をチャット表示に追加
  */
-void MainWindow::appendMessage(const QString &role, const QString &message) {
-    QString displayMessage;
-    if (role == "user") {
-        displayMessage = QString("You: %1").arg(message);
-    } else if (role == "assistant") {
-        displayMessage = QString("AI: %1").arg(message);
-    } else {
-        displayMessage = message;
-    }
-
-    int row = m_model->rowCount();
-    m_model->insertRow(row);
-    m_model->setData(m_model->index(row), displayMessage);
-
+void MainWindow::appendUserMessage(const QString &message) {
+    appendChatLine(m_model, ChatMessage::Role::User, message);
     ui->chatDisplay->scrollToBottom();
 }
 
 /**
- * @brief 音声再生ボタンクリック時
- * 選択中のメッセージを TTS で再生（シグナル経由）
+ * @brief アシスタント応答をチャット表示に追加
  */
-void MainWindow::onPlayTtsClicked() {
-    QModelIndexList selected =
-        ui->chatDisplay->selectionModel()->selectedIndexes();
-    if (selected.isEmpty()) {
-        onErrorOccurred("チャット履歴から再生したい発言を選択してください。");
-        return;
-    }
-
-    QString text = m_model->data(selected.first()).toString();
-    if (text.isEmpty()) {
-        return;
-    }
-
-    // AI の発言のみ再生可能
-    if (text.startsWith("You:")) {
-        onErrorOccurred(
-            "You の発言は再生できません。AI の発言を選択してください。");
-        return;
-    }
-
-    // テキストを保存
-    m_pendingTtsText = text.startsWith("AI: ") ? text.mid(4) : text;
-
-    // シグナルで TTS クライアントに送信（保存したテキストを使用）
-    emit synthesizeRequested(m_pendingTtsText);
+void MainWindow::appendAssistantMessage(const QString &message) {
+    appendChatLine(m_model, ChatMessage::Role::Assistant, message);
+    ui->chatDisplay->scrollToBottom();
 }
 
 /**
- * @brief チャットディスプレイクリック時
- * 選択ボタンの同期
+ * @brief エラー等の生メッセージをチャット表示に追加
  */
-void MainWindow::onChatDisplayClicked(const QModelIndex &index) {
-    Q_UNUSED(index);
-    syncTtsButtons();
+void MainWindow::appendErrorMessage(const QString &message) {
+    appendRawLine(m_model, message);
+    ui->chatDisplay->scrollToBottom();
+}
+
+/**
+ * @brief チャットディスプレイの右クリックメニューを表示
+ *
+ * - 単一選択時: 編集 / 削除 を表示。アシスタント発話なら音声合成も追加
+ * - 複数選択時: 削除 を表示。アシスタント発話が 1 件以上含まれる場合は
+ *   音声合成も追加
+ */
+void MainWindow::onChatDisplayContextMenu(const QPoint &pos) {
+    auto *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+
+    // 右クリック位置のアイテムが現在の選択に含まれていなければ、
+    // そのアイテムだけを単一選択し直す（一般的な GUI の挙動に合わせる）
+    QModelIndex clickedIndex = ui->chatDisplay->indexAt(pos);
+    if (clickedIndex.isValid() && !selectionModel->isSelected(clickedIndex)) {
+        selectionModel->select(clickedIndex, QItemSelectionModel::ClearAndSelect |
+                                                 QItemSelectionModel::Rows);
+        ui->chatDisplay->setCurrentIndex(clickedIndex);
+    }
+
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.isEmpty()) {
+        return;
+    }
+
+    // 選択中にアシスタント発話が 1 件でもあれば音声合成可
+    bool hasAssistant = false;
+    for (const QModelIndex &idx : selected) {
+        if (m_model->data(idx).toString().startsWith(kAssistantPrefix)) {
+            hasAssistant = true;
+            break;
+        }
+    }
+
+    QMenu menu(this);
+    if (selected.size() == 1) {
+        QAction *editAction = menu.addAction("編集");
+        connect(editAction, &QAction::triggered, this,
+                &MainWindow::editSelectedChatItem);
+    }
+    QAction *deleteAction = menu.addAction("削除");
+    connect(deleteAction, &QAction::triggered, this,
+            &MainWindow::deleteSelectedChatItems);
+    if (hasAssistant) {
+        QAction *playAction = menu.addAction("音声合成");
+        connect(playAction, &QAction::triggered, this,
+                &MainWindow::playSelectedChatItems);
+    }
+
+    menu.exec(ui->chatDisplay->viewport()->mapToGlobal(pos));
+}
+
+/**
+ * @brief 選択中のチャットアイテムを編集する
+ * 単一選択時のみ有効
+ */
+void MainWindow::editSelectedChatItem() {
+    auto *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.size() != 1) {
+        return;
+    }
+
+    QModelIndex idx = selected.first();
+    QString current = m_model->data(idx).toString();
+    bool ok = false;
+    QString newText = QInputDialog::getMultiLineText(this, "メッセージを編集",
+                                                     "メッセージ:", current, &ok);
+    if (!ok) {
+        return;
+    }
+    m_model->setData(idx, newText);
+}
+
+/**
+ * @brief 選択中のチャットアイテムを削除する
+ * 単一・複数選択どちらでも動作する（確認なし・即時削除）
+ */
+void MainWindow::deleteSelectedChatItems() {
+    auto *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.isEmpty()) {
+        return;
+    }
+
+    // 後ろから削除して、行番号がずれるのを防ぐ
+    QList<int> rows;
+    rows.reserve(selected.size());
+    for (const QModelIndex &idx : selected) {
+        rows.append(idx.row());
+    }
+    std::sort(rows.begin(), rows.end(), std::greater<int>());
+
+    for (int row : rows) {
+        m_model->removeRow(row);
+    }
+}
+
+/**
+ * @brief 選択中のアシスタント発話を音声合成する
+ *
+ * 選択行のうち kAssistantPrefix で始まる行のみをプレフィックスを取り除いて
+ * 抽出する。1 件なら synthesizeRequested、複数件なら
+ * synthesizeMultipleRequested を emit する。
+ */
+void MainWindow::playSelectedChatItems() {
+    auto *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.isEmpty()) {
+        return;
+    }
+
+    // 行順を保つために選択インデックスを行番号で昇順ソート
+    std::sort(selected.begin(), selected.end(),
+              [](const QModelIndex &a, const QModelIndex &b) {
+        return a.row() < b.row();
+    });
+
+    QStringList texts;
+    texts.reserve(selected.size());
+    for (const QModelIndex &idx : selected) {
+        const QString text = m_model->data(idx).toString();
+        if (text.startsWith(kAssistantPrefix)) {
+            texts.append(text.mid(kAssistantPrefix.size()));
+        }
+    }
+
+    if (texts.isEmpty()) {
+        return;
+    }
+    if (texts.size() == 1) {
+        emit synthesizeRequested(texts.first());
+    } else {
+        emit synthesizeMultipleRequested(texts);
+    }
 }
 
 /**
@@ -541,16 +717,6 @@ void MainWindow::generateTtsSpeech() {
     } else {
         emit synthesizeRequested(m_pendingTtsText);
     }
-}
-
-/**
- * @brief TTS ボタンの同期
- * 再生中かどうかでボタン状態を切り替え（シグナル経由）
- */
-void MainWindow::syncTtsButtons() {
-    // TTS クライアントのステータスは main.cpp からシグナルで更新
-    // 再生中でなければ再生ボタン有効
-    ui->playTtsButton->setEnabled(m_pendingTtsText.isEmpty() == false);
 }
 
 /**

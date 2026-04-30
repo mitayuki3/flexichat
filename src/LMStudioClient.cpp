@@ -24,9 +24,6 @@ LMStudioClient::LMStudioClient(QObject *parent)
     m_networkManager = new QNetworkAccessManager(this);
     connect(m_networkManager, &QNetworkAccessManager::finished, this,
             &LMStudioClient::onReplyFinished);
-
-    // チャット履歴の初期化
-    m_chatHistory = QJsonArray();
 }
 
 /**
@@ -36,9 +33,16 @@ LMStudioClient::~LMStudioClient() = default;
 
 /**
  * @brief チャットリクエストの送信
- * @param message ユーザーのメッセージ
+ * @param history 送信するチャット履歴（system プロンプトを除く user /
+ *                assistant メッセージ列）。最後の要素が今回送るユーザー
+ *                メッセージとなる。
+ *
+ * チャット履歴はクライアント内部に保持しない。呼び出し側（UI 表示モデル）
+ * を Single Source of Truth として、毎回その時点の履歴を渡す。
+ * JSON への変換は本関数内に閉じ込め、呼び出し側に API のシリアライズ形式を
+ * 漏らさない。
  */
-void LMStudioClient::sendRequest(const QString &message) {
+void LMStudioClient::sendRequest(const ChatHistory &history) {
     // メッセージ配列の構築
     QJsonArray messages;
 
@@ -50,19 +54,20 @@ void LMStudioClient::sendRequest(const QString &message) {
         messages.append(sysMsg);
     }
 
-    // チャット履歴を追加
-    for (const auto &historyMsg : m_chatHistory) {
-        messages.append(historyMsg.toObject());
+    // 呼び出し側から渡された履歴を JSON に変換して追加
+    for (const ChatMessage &msg : history) {
+        QJsonObject obj;
+        switch (msg.role) {
+        case ChatMessage::Role::User:
+            obj["role"] = "user";
+            break;
+        case ChatMessage::Role::Assistant:
+            obj["role"] = "assistant";
+            break;
+        }
+        obj["content"] = msg.content;
+        messages.append(obj);
     }
-
-    // ユーザーメッセージを追加
-    QJsonObject userMessage;
-    userMessage["role"] = "user";
-    userMessage["content"] = message;
-    messages.append(userMessage);
-
-    // ユーザーメッセージをチャット履歴に追加（次回以降のため）
-    m_chatHistory.append(userMessage);
 
     // リクエストボディの作成
     QJsonObject body;
@@ -130,13 +135,8 @@ void LMStudioClient::onReplyFinished(QNetworkReply *reply) {
     QJsonObject messageObj = firstChoice.value("message").toObject();
     QString assistantReply = messageObj.value("content").toString();
 
-    // アシスタントの応答をチャット履歴に追加
-    QJsonObject assistantMessage;
-    assistantMessage["role"] = "assistant";
-    assistantMessage["content"] = assistantReply;
-    m_chatHistory.append(assistantMessage);
-
     // 応答シグナルの発行
+    // 履歴は呼び出し側（UI モデル）が保持するため、ここでは保持しない
     emit replyReceived(assistantReply);
 
     // リクエスト完了シグナルを発行
@@ -189,11 +189,6 @@ void LMStudioClient::setProfile(const SystemPromptProfile &profile) {
  * @brief ベースURLの設定
  */
 void LMStudioClient::setBaseUrl(const QString &url) { m_baseUrl = url; }
-
-/**
- * @brief チャット履歴のリセット
- */
-void LMStudioClient::resetChatHistory() { m_chatHistory = QJsonArray(); }
 
 /**
  * @brief 接続テスト

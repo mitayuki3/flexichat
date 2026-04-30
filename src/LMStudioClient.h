@@ -1,7 +1,7 @@
 #pragma once
 
+#include "ChatMessage.h"
 #include "SystemPromptProfile.h"
-#include <QJsonArray>
 #include <QNetworkReply>
 #include <QObject>
 
@@ -18,31 +18,9 @@ public:
     explicit LMStudioClient(QObject *parent = nullptr);
     ~LMStudioClient() override;
 
-    /**
-   * @brief チャットリクエストの送信
-   * @param message ユーザーのメッセージ
-   */
-    void sendRequest(const QString &message);
-
-    /**
-   * @brief プロファイルの設定
-   * @param profile システムプロンプトプロファイル
-   */
+    void sendRequest(const ChatHistory &history);
     void setProfile(const SystemPromptProfile &profile);
-
-    /**
-   * @brief ベースURLの設定
-   */
     void setBaseUrl(const QString &url);
-
-    /**
-   * @brief チャット履歴のリセット
-   */
-    void resetChatHistory();
-
-    /**
-   * @brief 接続テスト
-   */
     void testConnection();
 
 signals:
@@ -58,7 +36,6 @@ private slots:
 
 private:
     QNetworkAccessManager *m_networkManager;
-    QJsonArray m_chatHistory;
     QString m_baseUrl;
     SystemPromptProfile m_activeProfile;
     bool m_isConnectionTest;

@@ -54,11 +54,14 @@
             <verstretch>1</verstretch>
            </sizepolicy>
           </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+          </property>
           <property name="editTriggers">
            <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+           <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
           </property>
           <property name="resizeMode">
            <enum>QListView::ResizeMode::Adjust</enum>
@@ -108,16 +111,6 @@
            <widget class="QCheckBox" name="autoplayCheckBox">
             <property name="text">
              <string>自動再生</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="playTtsButton">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="text">
-             <string>音声合成</string>
             </property>
            </widget>
           </item>

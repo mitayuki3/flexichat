@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ChatMessage.h"
 #include <QComboBox>
 #include <QMainWindow>
 #include <QStringListModel>
@@ -33,13 +34,12 @@ public slots:
     void onApiRequestFinished();
     void onProfileChanged(const SystemPromptProfile &profile);
     void onProfileListChanged();
-    void syncTtsButtons();
     void showStatusMessage(const QString &status);
     QString getPendingTtsText() const;
     void appendTtsOutput(QString const &filePath);
 
 signals:
-    void requestSend(const QString &message);
+    void requestSend(const ChatHistory &history);
     void profileChangeRequested(const QString &profileId);
     void synthesizeRequested(const QString &text);
     void synthesizeMultipleRequested(QStringList const &list);
@@ -52,8 +52,10 @@ signals:
 private slots:
     void onSendClicked();
     void onProfileComboActivated(int index);
-    void onPlayTtsClicked();
-    void onChatDisplayClicked(const QModelIndex &index);
+    void onChatDisplayContextMenu(const QPoint &pos);
+    void editSelectedChatItem();
+    void deleteSelectedChatItems();
+    void playSelectedChatItems();
     void generateTtsSpeech();
     void onTtsListRowChanged(int row);
     void onTtsListActivated(const QModelIndex &index);
@@ -77,7 +79,9 @@ private:
 
     void setupUI();
     void connectSignals();
-    void appendMessage(const QString &role, const QString &message);
+    void appendUserMessage(const QString &message);
+    void appendAssistantMessage(const QString &message);
+    void appendErrorMessage(const QString &message);
     void populateProfileCombo();
     void loadProfileIntoEditor(const SystemPromptProfile &profile);
     void populateTrashList();
