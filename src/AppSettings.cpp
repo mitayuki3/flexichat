@@ -8,8 +8,10 @@ const QString AppSettings::KEY_PROFILES_LEGACY = "Profiles/Data";
 const QString AppSettings::KEY_ACTIVE_PROFILE = "General/ActiveProfileId";
 const QString AppSettings::KEY_API_BASE_URL = "General/ApiBaseUrl";
 const QString AppSettings::KEY_TTS_API_KEY = "Tts/ApiKey";
+// 単一 QString と QStringList は QSettings 上で互換に読めるため、
+// 履歴は従来の "Tts/Voice" キーに QStringList として保存する。
+// 先頭要素が「現在のボイス」となる
 const QString AppSettings::KEY_TTS_VOICE = "Tts/Voice";
-const QString AppSettings::KEY_TTS_VOICE_HISTORY = "Tts/VoiceHistory";
 const QString AppSettings::KEY_TTS_INSTRUCTIONS = "Tts/Instructions";
 const QString AppSettings::KEY_TTS_AUTO_PLAY = "Tts/AutoPlay";
 const QString AppSettings::KEY_TTS_BASE_URL = "Tts/BaseUrl";
@@ -140,24 +142,28 @@ QString AppSettings::loadTtsModel() const {
 }
 
 void AppSettings::saveTtsVoice(const QString &voice) {
-    if (voice == loadTtsVoice()) {
-        return;
-    }
-    m_settings.setValue(KEY_TTS_VOICE, voice);
+    // 「現在のボイス」は履歴の先頭で表現する。履歴に追加するだけでよい
     addTtsVoiceToHistory(voice);
-    emit changedTts(TtsSettingsData::fromAppSettings(*this));
 }
 
 QString AppSettings::loadTtsVoice() const {
-    return m_settings.value(KEY_TTS_VOICE, "alloy").toString();
+    // 履歴の先頭を「現在のボイス」とみなす。履歴が空ならデフォルト
+    QStringList history = loadTtsVoiceHistory();
+    if (!history.isEmpty()) {
+        return history.first();
+    }
+    return "alloy";
 }
 
 void AppSettings::saveTtsVoiceHistory(const QStringList &history) {
-    m_settings.setValue(KEY_TTS_VOICE_HISTORY, history);
+    m_settings.setValue(KEY_TTS_VOICE, history);
 }
 
 QStringList AppSettings::loadTtsVoiceHistory() const {
-    return m_settings.value(KEY_TTS_VOICE_HISTORY).toStringList();
+    // QSettings では単一 QString と QStringList が互換に読めるため、
+    // 旧来の単一値として保存された "Tts/Voice" もそのまま toStringList() で
+    // 1 要素のリストとして得られる
+    return m_settings.value(KEY_TTS_VOICE).toStringList();
 }
 
 static constexpr int kMaxVoiceHistory = 20;
@@ -167,12 +173,17 @@ void AppSettings::addTtsVoiceToHistory(const QString &voice) {
         return;
     }
     QStringList history = loadTtsVoiceHistory();
+    // 既に先頭にある場合は変更不要（changedTts も emit しない）
+    if (!history.isEmpty() && history.first() == voice) {
+        return;
+    }
     history.removeAll(voice);
     history.prepend(voice);
     while (history.size() > kMaxVoiceHistory) {
         history.removeLast();
     }
     saveTtsVoiceHistory(history);
+    emit changedTts(TtsSettingsData::fromAppSettings(*this));
 }
 
 void AppSettings::saveTtsInstructions(const QString &instructions) {

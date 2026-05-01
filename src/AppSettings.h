@@ -69,7 +69,6 @@ private:
     static const QString KEY_API_BASE_URL;
     static const QString KEY_TTS_API_KEY;
     static const QString KEY_TTS_VOICE;
-    static const QString KEY_TTS_VOICE_HISTORY;
     static const QString KEY_TTS_INSTRUCTIONS;
     static const QString KEY_TTS_AUTO_PLAY;
     static const QString KEY_TTS_BASE_URL;

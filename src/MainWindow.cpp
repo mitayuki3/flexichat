@@ -459,11 +459,12 @@ void MainWindow::setupUI() {
             break;
         }
     }
-    // ボイス履歴をコンボボックスにセット
+    // ボイス履歴をコンボボックスにセットし、先頭（＝最後に確定したボイス）を
+    // 現在値として表示する。履歴が空のときは getTtsVoice() がデフォルト値
+    // ("alloy") を返すのでそれを表示する
     QStringList voiceHistory = m_profileManager->getTtsVoiceHistory();
     ui->ttsVoiceCombo->addItems(voiceHistory);
-    QString savedVoice = m_profileManager->getTtsVoice();
-    ui->ttsVoiceCombo->setCurrentText(savedVoice);
+    ui->ttsVoiceCombo->setCurrentText(m_profileManager->getTtsVoice());
 
     // 保存された自動再生設定をチェックボックスに反映
     ui->autoplayCheckBox->setChecked(m_profileManager->getTtsAutoPlay());
