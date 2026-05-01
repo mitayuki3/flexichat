@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -50,7 +50,7 @@ jobs:
           windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw dist\FlexiChat.exe
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: FlexiChat-windows-x64
           path: dist/
