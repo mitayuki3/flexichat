@@ -50,7 +50,7 @@ jobs:
           windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw dist\FlexiChat.exe
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: FlexiChat-windows-x64
           path: dist/
