@@ -87,6 +87,8 @@ void MainWindow::connectSignals() {
             &MainWindow::generateTtsSpeech);
     connect(ui->ttsPlayButton, &QPushButton::clicked, this,
             &MainWindow::ttsPlayRequested);
+    connect(ui->ttsModelListWidget, &QListWidget::currentTextChanged, this,
+            &MainWindow::modelChanged);
     connect(ui->ttsVoiceCombo, &QComboBox::currentTextChanged, this,
             &MainWindow::voiceChanged);
 

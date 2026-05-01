@@ -86,6 +86,10 @@ int main(int argc, char *argv[]) {
     QObject::connect(&mainWindow, &MainWindow::autoplayChanged, settings,
                      &AppSettings::saveTtsAutoPlay);
 
+    // TTS タブのモデル変更を保存（保存経由で MainLogic に反映される）
+    QObject::connect(&mainWindow, &MainWindow::modelChanged, settings,
+                     &AppSettings::saveTtsModel);
+
     // TTS タブのボイス変更を保存（保存経由で MainLogic に反映される）
     QObject::connect(&mainWindow, &MainWindow::voiceChanged, settings,
                      &AppSettings::saveTtsVoice);

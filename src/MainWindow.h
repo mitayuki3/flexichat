@@ -44,6 +44,7 @@ signals:
     void synthesizeRequested(const QString &text);
     void synthesizeMultipleRequested(QStringList const &list);
     void autoplayChanged(bool checked);
+    void modelChanged(const QString &model);
     void voiceChanged(const QString &voice);
     void ttsPlayRequested();
     void ttsFileSelected(const QString &filePath);
