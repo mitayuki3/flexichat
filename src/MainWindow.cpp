@@ -89,14 +89,24 @@ void MainWindow::connectSignals() {
             &MainWindow::ttsPlayRequested);
     connect(ui->ttsModelListWidget, &QListWidget::currentTextChanged, this,
             &MainWindow::modelChanged);
-    connect(ui->ttsVoiceCombo, &QComboBox::currentTextChanged, this,
-            [this](const QString &voice) {
-                if (!voice.trimmed().isEmpty() &&
-                    ui->ttsVoiceCombo->findText(voice) < 0) {
-                    ui->ttsVoiceCombo->insertItem(0, voice);
-                }
-                emit voiceChanged(voice);
-            });
+    // ボイス欄は編集中の途中経過ではなく、確定時（ドロップダウン選択 or
+    // 編集終了＝フォーカスアウト / Enter）にのみコンボと履歴へ追加する
+    auto commitTtsVoice = [this]() {
+        QString voice = ui->ttsVoiceCombo->currentText().trimmed();
+        if (voice.isEmpty()) {
+            return;
+        }
+        if (ui->ttsVoiceCombo->findText(voice) < 0) {
+            ui->ttsVoiceCombo->insertItem(0, voice);
+        }
+        emit voiceChanged(voice);
+    };
+    connect(ui->ttsVoiceCombo, QOverload<int>::of(&QComboBox::activated), this,
+            [commitTtsVoice](int) { commitTtsVoice(); });
+    if (QLineEdit *voiceLineEdit = ui->ttsVoiceCombo->lineEdit()) {
+        connect(voiceLineEdit, &QLineEdit::editingFinished, this,
+                commitTtsVoice);
+    }
 
     // TTS リスト
     connect(ui->ttsListWidget, &QListWidget::currentRowChanged, this,
