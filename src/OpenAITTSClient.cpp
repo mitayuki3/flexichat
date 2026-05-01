@@ -195,10 +195,14 @@ void OpenAITTSClient::setOutputDir(const QString &dir) { m_outputDir = dir; }
 QString OpenAITTSClient::generateFilePath(const QString &format) const {
     // 出力ディレクトリ: {m_outputDir}/{model}/{voice}/{date}
     QString dateDir = QDate::currentDate().toString("yyyyMMdd");
-    QString relativeDir = m_model + "/" + m_voice + "/" + dateDir;
+    QString modelDir = m_model.isEmpty() ? QStringLiteral("default") : m_model;
+    QString voiceDir = m_voice.isEmpty() ? QStringLiteral("default") : m_voice;
+    QString relativeDir = modelDir + "/" + voiceDir + "/" + dateDir;
     QString fullDir = m_outputDir + "/" + relativeDir;
     if (!QDir(fullDir).exists()) {
         QDir(m_outputDir).mkpath(relativeDir);
+    }
+
     }
 
     // ファイル名: {時刻}.{format}
