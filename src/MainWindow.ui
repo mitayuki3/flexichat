@@ -239,16 +239,16 @@
               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
              </property>
              <property name="minimum">
-              <number>64</number>
+              <number>1</number>
              </property>
              <property name="maximum">
               <number>16384</number>
              </property>
              <property name="singleStep">
-              <number>128</number>
+              <number>1</number>
              </property>
              <property name="value">
-              <number>2048</number>
+              <number>1024</number>
              </property>
             </widget>
            </item>
