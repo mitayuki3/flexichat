@@ -193,19 +193,19 @@ void OpenAITTSClient::setOutputDir(const QString &dir) { m_outputDir = dir; }
  * @return 生成されたファイルパス
  */
 QString OpenAITTSClient::generateFilePath(const QString &format) const {
-    // 日付別ディレクトリ
+    // 出力ディレクトリ: {m_outputDir}/{model}/{voice}/{date}
     QString dateDir = QDate::currentDate().toString("yyyyMMdd");
-    QDir dir(m_outputDir);
-    QString fullDateDir = m_outputDir + "/" + dateDir;
-    if (!QDir(fullDateDir).exists()) {
-        QDir(m_outputDir).mkpath(dateDir);
+    QString relativeDir = m_model + "/" + m_voice + "/" + dateDir;
+    QString fullDir = m_outputDir + "/" + relativeDir;
+    if (!QDir(fullDir).exists()) {
+        QDir(m_outputDir).mkpath(relativeDir);
     }
 
     // ファイル名: {時刻}.{format}
     QString timeStr = QTime::currentTime().toString("HHmmsszzz");
     QString fileName = QString("%1.%2").arg(timeStr, format);
 
-    return fullDateDir + "/" + fileName;
+    return fullDir + "/" + fileName;
 }
 
 /**
