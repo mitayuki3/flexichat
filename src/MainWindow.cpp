@@ -90,7 +90,13 @@ void MainWindow::connectSignals() {
     connect(ui->ttsModelListWidget, &QListWidget::currentTextChanged, this,
             &MainWindow::modelChanged);
     connect(ui->ttsVoiceCombo, &QComboBox::currentTextChanged, this,
-            &MainWindow::voiceChanged);
+            [this](const QString &voice) {
+                if (!voice.trimmed().isEmpty() &&
+                    ui->ttsVoiceCombo->findText(voice) < 0) {
+                    ui->ttsVoiceCombo->insertItem(0, voice);
+                }
+                emit voiceChanged(voice);
+            });
 
     // TTS リスト
     connect(ui->ttsListWidget, &QListWidget::currentRowChanged, this,
@@ -443,6 +449,9 @@ void MainWindow::setupUI() {
             break;
         }
     }
+    // ボイス履歴をコンボボックスにセット
+    QStringList voiceHistory = m_profileManager->getTtsVoiceHistory();
+    ui->ttsVoiceCombo->addItems(voiceHistory);
     QString savedVoice = m_profileManager->getTtsVoice();
     ui->ttsVoiceCombo->setCurrentText(savedVoice);
 

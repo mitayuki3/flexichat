@@ -9,6 +9,7 @@ const QString AppSettings::KEY_ACTIVE_PROFILE = "General/ActiveProfileId";
 const QString AppSettings::KEY_API_BASE_URL = "General/ApiBaseUrl";
 const QString AppSettings::KEY_TTS_API_KEY = "Tts/ApiKey";
 const QString AppSettings::KEY_TTS_VOICE = "Tts/Voice";
+const QString AppSettings::KEY_TTS_VOICE_HISTORY = "Tts/VoiceHistory";
 const QString AppSettings::KEY_TTS_INSTRUCTIONS = "Tts/Instructions";
 const QString AppSettings::KEY_TTS_AUTO_PLAY = "Tts/AutoPlay";
 const QString AppSettings::KEY_TTS_BASE_URL = "Tts/BaseUrl";
@@ -143,11 +144,35 @@ void AppSettings::saveTtsVoice(const QString &voice) {
         return;
     }
     m_settings.setValue(KEY_TTS_VOICE, voice);
+    addTtsVoiceToHistory(voice);
     emit changedTts(TtsSettingsData::fromAppSettings(*this));
 }
 
 QString AppSettings::loadTtsVoice() const {
     return m_settings.value(KEY_TTS_VOICE, "alloy").toString();
+}
+
+void AppSettings::saveTtsVoiceHistory(const QStringList &history) {
+    m_settings.setValue(KEY_TTS_VOICE_HISTORY, history);
+}
+
+QStringList AppSettings::loadTtsVoiceHistory() const {
+    return m_settings.value(KEY_TTS_VOICE_HISTORY).toStringList();
+}
+
+static constexpr int kMaxVoiceHistory = 20;
+
+void AppSettings::addTtsVoiceToHistory(const QString &voice) {
+    if (voice.trimmed().isEmpty()) {
+        return;
+    }
+    QStringList history = loadTtsVoiceHistory();
+    history.removeAll(voice);
+    history.prepend(voice);
+    while (history.size() > kMaxVoiceHistory) {
+        history.removeLast();
+    }
+    saveTtsVoiceHistory(history);
 }
 
 void AppSettings::saveTtsInstructions(const QString &instructions) {
