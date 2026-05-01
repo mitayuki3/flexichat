@@ -198,6 +198,10 @@ QString ProfileManager::getTtsVoice() const {
     return m_settings->loadTtsVoice();
 }
 
+QStringList ProfileManager::getTtsVoiceHistory() const {
+    return m_settings->loadTtsVoiceHistory();
+}
+
 bool ProfileManager::getTtsAutoPlay() const {
     return m_settings->loadTtsAutoPlay();
 }

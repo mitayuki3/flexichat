@@ -89,8 +89,24 @@ void MainWindow::connectSignals() {
             &MainWindow::ttsPlayRequested);
     connect(ui->ttsModelListWidget, &QListWidget::currentTextChanged, this,
             &MainWindow::modelChanged);
-    connect(ui->ttsVoiceCombo, &QComboBox::currentTextChanged, this,
-            &MainWindow::voiceChanged);
+    // ボイス欄は編集中の途中経過ではなく、確定時（ドロップダウン選択 or
+    // 編集終了＝フォーカスアウト / Enter）にのみコンボと履歴へ追加する
+    auto commitTtsVoice = [this]() {
+        QString voice = ui->ttsVoiceCombo->currentText().trimmed();
+        if (voice.isEmpty()) {
+            return;
+        }
+        if (ui->ttsVoiceCombo->findText(voice) < 0) {
+            ui->ttsVoiceCombo->insertItem(0, voice);
+        }
+        emit voiceChanged(voice);
+    };
+    connect(ui->ttsVoiceCombo, QOverload<int>::of(&QComboBox::activated), this,
+            [commitTtsVoice](int) { commitTtsVoice(); });
+    if (QLineEdit *voiceLineEdit = ui->ttsVoiceCombo->lineEdit()) {
+        connect(voiceLineEdit, &QLineEdit::editingFinished, this,
+                commitTtsVoice);
+    }
 
     // TTS リスト
     connect(ui->ttsListWidget, &QListWidget::currentRowChanged, this,
@@ -443,8 +459,12 @@ void MainWindow::setupUI() {
             break;
         }
     }
-    QString savedVoice = m_profileManager->getTtsVoice();
-    ui->ttsVoiceCombo->setCurrentText(savedVoice);
+    // ボイス履歴をコンボボックスにセットし、先頭（＝最後に確定したボイス）を
+    // 現在値として表示する。履歴が空のときは getTtsVoice() がデフォルト値
+    // ("alloy") を返すのでそれを表示する
+    QStringList voiceHistory = m_profileManager->getTtsVoiceHistory();
+    ui->ttsVoiceCombo->addItems(voiceHistory);
+    ui->ttsVoiceCombo->setCurrentText(m_profileManager->getTtsVoice());
 
     // 保存された自動再生設定をチェックボックスに反映
     ui->autoplayCheckBox->setChecked(m_profileManager->getTtsAutoPlay());

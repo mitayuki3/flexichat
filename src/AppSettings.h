@@ -45,6 +45,9 @@ public:
     QString loadTtsModel() const;
     void saveTtsVoice(const QString &voice);
     QString loadTtsVoice() const;
+    void saveTtsVoiceHistory(const QStringList &history);
+    QStringList loadTtsVoiceHistory() const;
+    void addTtsVoiceToHistory(const QString &voice);
     void saveTtsInstructions(const QString &instructions);
     QString loadTtsInstructions() const;
     void saveTtsAutoPlay(bool enabled);
