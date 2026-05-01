@@ -1,0 +1,57 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: Windows (MSVC x64)
+    runs-on: windows-latest
+
+    env:
+      QT_VERSION: 6.7.3
+      BUILD_TYPE: Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2019_64
+          modules: qtmultimedia
+          cache: true
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure (CMake)
+        shell: cmd
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_TYPE%
+
+      - name: Build
+        shell: cmd
+        run: cmake --build build --config %BUILD_TYPE% -j
+
+      - name: Stage and run windeployqt
+        shell: cmd
+        run: |
+          mkdir dist
+          copy build\FlexiChat.exe dist\
+          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw dist\FlexiChat.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlexiChat-windows-x64
+          path: dist/
+          if-no-files-found: error
