@@ -49,4 +49,5 @@ private:
     void startRequest(const QString &text);
     void abortCurrent();
     void processNext();
+    bool isVoiceDesignModel() const;
 };
