@@ -499,10 +499,11 @@ void MainWindow::setupUI() {
     ui->ttsVoiceCombo->addItems(voiceHistory);
     ui->ttsVoiceCombo->setCurrentText(m_profileManager->getTtsVoice());
 
-    // インストラクション欄に保存値を反映し、現在のモデルに応じて表示を切替
+    // インストラクション欄に保存値を反映し、現在のモデルに応じて
+    // ボイス欄／インストラクション欄の表示を切替
     ui->ttsInstructionsEdit->setPlainText(
         m_profileManager->getTtsInstructions());
-    updateInstructionsVisibility(savedModel);
+    updateModelDependentVisibility(savedModel);
 
     // 保存された自動再生設定をチェックボックスに反映
     ui->autoplayCheckBox->setChecked(m_profileManager->getTtsAutoPlay());
@@ -717,7 +718,7 @@ QString MainWindow::getPendingTtsText() const { return m_pendingTtsText; }
  */
 void MainWindow::onTtsModelChanged(const QString &model) {
     emit modelChanged(model);
-    updateInstructionsVisibility(model);
+    updateModelDependentVisibility(model);
 }
 
 /**
@@ -730,17 +731,21 @@ bool MainWindow::isVoiceDesignModel(const QString &model) {
 }
 
 /**
- * @brief インストラクション欄の表示／非表示を切り替える
- * voicedesign モデルが選択されているときのみ表示する
+ * @brief モデル選択に応じて voicedesign 専用 UI と通常 UI を切り替える
+ * voicedesign モデル選択時はインストラクション欄を表示し、ボイス欄を隠す。
+ * 通常モデル選択時はその逆。
  */
-void MainWindow::updateInstructionsVisibility(const QString &model) {
-    bool visible = isVoiceDesignModel(model);
-    if (auto *layout = qobject_cast<QFormLayout *>(
-            ui->ttsParametersWidget->layout())) {
-        layout->setRowVisible(ui->ttsInstructionsEdit, visible);
+void MainWindow::updateModelDependentVisibility(const QString &model) {
+    bool voiceDesign = isVoiceDesignModel(model);
+    auto *layout = qobject_cast<QFormLayout *>(
+        ui->ttsParametersWidget->layout());
+    if (layout) {
+        layout->setRowVisible(ui->ttsInstructionsEdit, voiceDesign);
+        layout->setRowVisible(ui->ttsVoiceCombo, !voiceDesign);
     } else {
-        ui->ttsInstructionsLabel->setVisible(visible);
-        ui->ttsInstructionsEdit->setVisible(visible);
+        ui->ttsInstructionsLabel->setVisible(voiceDesign);
+        ui->ttsInstructionsEdit->setVisible(voiceDesign);
+        ui->ttsVoiceCombo->setVisible(!voiceDesign);
     }
 }
 

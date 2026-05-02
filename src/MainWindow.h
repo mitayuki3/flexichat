@@ -92,6 +92,6 @@ private:
     void loadProfileIntoEditor(const SystemPromptProfile &profile);
     void populateTrashList();
     void updateTrashButton();
-    void updateInstructionsVisibility(const QString &model);
+    void updateModelDependentVisibility(const QString &model);
     static bool isVoiceDesignModel(const QString &model);
 };
