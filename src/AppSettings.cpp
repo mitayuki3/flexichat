@@ -144,7 +144,6 @@ void AppSettings::saveTtsVoice(const QString &voice) {
         return;
     }
     m_settings.setValue(KEY_TTS_VOICE, voice);
-    addTtsVoiceToHistory(voice);
     emit changedTts(TtsSettingsData::fromAppSettings(*this));
 }
 

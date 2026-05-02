@@ -89,13 +89,18 @@ void MainWindow::connectSignals() {
             &MainWindow::ttsPlayRequested);
     connect(ui->ttsModelListWidget, &QListWidget::currentTextChanged, this,
             &MainWindow::modelChanged);
-    connect(ui->ttsVoiceCombo, &QComboBox::currentTextChanged, this,
-            [this](const QString &voice) {
-                if (!voice.trimmed().isEmpty() &&
+    connect(ui->ttsVoiceCombo->lineEdit(), &QLineEdit::editingFinished, this,
+            [this]() {
+                QString voice = ui->ttsVoiceCombo->currentText().trimmed();
+                if (!voice.isEmpty() &&
                     ui->ttsVoiceCombo->findText(voice) < 0) {
                     ui->ttsVoiceCombo->insertItem(0, voice);
                 }
                 emit voiceChanged(voice);
+            });
+    connect(ui->ttsVoiceCombo, QOverload<int>::of(&QComboBox::activated), this,
+            [this](int) {
+                emit voiceChanged(ui->ttsVoiceCombo->currentText());
             });
 
     // TTS リスト

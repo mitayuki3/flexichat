@@ -93,6 +93,8 @@ int main(int argc, char *argv[]) {
     // TTS タブのボイス変更を保存（保存経由で MainLogic に反映される）
     QObject::connect(&mainWindow, &MainWindow::voiceChanged, settings,
                      &AppSettings::saveTtsVoice);
+    QObject::connect(&mainWindow, &MainWindow::voiceChanged, settings,
+                     &AppSettings::addTtsVoiceToHistory);
 
     // MainWindow → LMStudioClient のシグナル仲介
     // チャット履歴は MainWindow の表示モデルを Single Source of Truth として
