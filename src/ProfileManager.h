@@ -32,9 +32,11 @@ public:
     QString getTtsModel() const;
     QString getTtsVoice() const;
     QStringList getTtsVoiceHistory() const;
+    QString getTtsInstructions() const;
     bool getTtsAutoPlay() const;
     void saveTtsModel(const QString &model);
     void saveTtsVoice(const QString &voice);
+    void saveTtsInstructions(const QString &instructions);
 
     static QList<SystemPromptProfile> builtInDefaults();
 

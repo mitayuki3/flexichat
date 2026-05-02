@@ -107,6 +107,10 @@ void OpenAITTSClient::processNext() {
     startRequest(next);
 }
 
+bool OpenAITTSClient::isVoiceDesignModel() const {
+    return m_model.contains("voicedesign", Qt::CaseInsensitive);
+}
+
 /**
  * @brief HTTP リクエストを実際に送出する
  * @param text 音声化するテキスト
@@ -196,8 +200,16 @@ QString OpenAITTSClient::generateFilePath(const QString &format) const {
     // 出力ディレクトリ: {m_outputDir}/{model}/{voice}/{date}
     QString dateDir = QDate::currentDate().toString("yyyyMMdd");
     QString modelDir = m_model.isEmpty() ? QStringLiteral("default") : m_model;
-    QString voiceDir = m_voice.isEmpty() ? QStringLiteral("default") : m_voice;
-    QString relativeDir = modelDir + "/" + voiceDir + "/" + dateDir;
+    QString relativeDir;
+    if (isVoiceDesignModel()) {
+        // irodori-tts-500m-v2-voicedesign は voice
+        // を使わないのでディレクトリ名に入れない
+        relativeDir = modelDir + "/" + dateDir;
+    } else {
+        QString voiceDir =
+            m_voice.isEmpty() ? QStringLiteral("default") : m_voice;
+        relativeDir = modelDir + "/" + voiceDir + "/" + dateDir;
+    }
     QString fullDir = m_outputDir + "/" + relativeDir;
     if (!QDir(fullDir).exists()) {
         QDir(m_outputDir).mkpath(relativeDir);
