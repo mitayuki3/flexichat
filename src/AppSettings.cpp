@@ -166,7 +166,7 @@ QStringList AppSettings::loadTtsVoiceHistory() const {
     return m_settings.value(KEY_TTS_VOICE).toStringList();
 }
 
-static constexpr int kMaxVoiceHistory = 20;
+static constexpr int kMaxVoiceHistory = 50;
 
 void AppSettings::addTtsVoiceToHistory(const QString &voice) {
     if (voice.trimmed().isEmpty()) {
