@@ -214,6 +214,14 @@ void ProfileManager::saveTtsVoice(const QString &voice) {
     m_settings->saveTtsVoice(voice);
 }
 
+QString ProfileManager::getTtsInstructions() const {
+    return m_settings->loadTtsInstructions();
+}
+
+void ProfileManager::saveTtsInstructions(const QString &instructions) {
+    m_settings->saveTtsInstructions(instructions);
+}
+
 QList<SystemPromptProfile> ProfileManager::builtInDefaults() {
     return {SystemPromptProfile::createDefault("general", "一般"),
             SystemPromptProfile::createDefault(

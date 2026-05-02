@@ -46,6 +46,7 @@ signals:
     void autoplayChanged(bool checked);
     void modelChanged(const QString &model);
     void voiceChanged(const QString &voice);
+    void instructionsChanged(const QString &instructions);
     void ttsPlayRequested();
     void ttsFileSelected(const QString &filePath);
     void ttsFileActivated(const QString &filePath);
@@ -58,6 +59,7 @@ private slots:
     void deleteSelectedChatItems();
     void playSelectedChatItems();
     void generateTtsSpeech();
+    void onTtsModelChanged(const QString &model);
     void onTtsListRowChanged(int row);
     void onTtsListActivated(const QModelIndex &index);
     void scheduleProfileCommit();
@@ -87,4 +89,6 @@ private:
     void loadProfileIntoEditor(const SystemPromptProfile &profile);
     void populateTrashList();
     void updateTrashButton();
+    void updateInstructionsVisibility(const QString &model);
+    static bool isVoiceDesignModel(const QString &model);
 };

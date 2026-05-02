@@ -131,7 +131,9 @@ void OpenAITTSClient::startRequest(const QString &text) {
     if (!m_voice.isEmpty()) {
         body["voice"] = m_voice;
     }
-    if (!m_instructions.isEmpty()) {
+    // インストラクションは voicedesign モデル選択時のみ送出する
+    if (!m_instructions.isEmpty() &&
+        m_model.contains("voicedesign", Qt::CaseInsensitive)) {
         body["instructions"] = m_instructions;
     }
     if (!m_format.isEmpty()) {

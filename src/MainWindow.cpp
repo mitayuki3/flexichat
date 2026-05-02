@@ -4,6 +4,7 @@
 #include "ui_MainWindow.h"
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QFormLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -88,7 +89,7 @@ void MainWindow::connectSignals() {
     connect(ui->ttsPlayButton, &QPushButton::clicked, this,
             &MainWindow::ttsPlayRequested);
     connect(ui->ttsModelListWidget, &QListWidget::currentTextChanged, this,
-            &MainWindow::modelChanged);
+            &MainWindow::onTtsModelChanged);
     // ボイス欄は編集中の途中経過ではなく、確定時（ドロップダウン選択 or
     // 編集終了＝フォーカスアウト / Enter）にのみコンボと履歴へ追加する
     auto commitTtsVoice = [this]() {
@@ -107,6 +108,13 @@ void MainWindow::connectSignals() {
         connect(voiceLineEdit, &QLineEdit::editingFinished, this,
                 commitTtsVoice);
     }
+
+    // インストラクション欄（voicedesign モデル選択時のみ表示・編集）
+    connect(ui->ttsInstructionsEdit, &QPlainTextEdit::textChanged, this,
+            [this]() {
+                emit instructionsChanged(
+                    ui->ttsInstructionsEdit->toPlainText());
+            });
 
     // TTS リスト
     connect(ui->ttsListWidget, &QListWidget::currentRowChanged, this,
@@ -466,6 +474,11 @@ void MainWindow::setupUI() {
     ui->ttsVoiceCombo->addItems(voiceHistory);
     ui->ttsVoiceCombo->setCurrentText(m_profileManager->getTtsVoice());
 
+    // インストラクション欄に保存値を反映し、現在のモデルに応じて表示を切替
+    ui->ttsInstructionsEdit->setPlainText(
+        m_profileManager->getTtsInstructions());
+    updateInstructionsVisibility(savedModel);
+
     // 保存された自動再生設定をチェックボックスに反映
     ui->autoplayCheckBox->setChecked(m_profileManager->getTtsAutoPlay());
 
@@ -671,6 +684,40 @@ void MainWindow::generateTtsSpeech() {
  * @brief pendingTtsText を返す
  */
 QString MainWindow::getPendingTtsText() const { return m_pendingTtsText; }
+
+/**
+ * @brief TTS モデル選択変更時の処理
+ * 保存用の modelChanged シグナルを発行し、モデルに応じてインストラクション欄
+ * の表示を切り替える。
+ */
+void MainWindow::onTtsModelChanged(const QString &model) {
+    emit modelChanged(model);
+    updateInstructionsVisibility(model);
+}
+
+/**
+ * @brief モデル名が voicedesign モデルかどうか
+ * irodori-tts-500m-v2-voicedesign など "voicedesign" を含むモデルでのみ
+ * インストラクションを指定できる
+ */
+bool MainWindow::isVoiceDesignModel(const QString &model) {
+    return model.contains("voicedesign", Qt::CaseInsensitive);
+}
+
+/**
+ * @brief インストラクション欄の表示／非表示を切り替える
+ * voicedesign モデルが選択されているときのみ表示する
+ */
+void MainWindow::updateInstructionsVisibility(const QString &model) {
+    bool visible = isVoiceDesignModel(model);
+    if (auto *layout = qobject_cast<QFormLayout *>(
+            ui->ttsParametersWidget->layout())) {
+        layout->setRowVisible(ui->ttsInstructionsEdit, visible);
+    } else {
+        ui->ttsInstructionsLabel->setVisible(visible);
+        ui->ttsInstructionsEdit->setVisible(visible);
+    }
+}
 
 /**
  * @brief ステータスバーを更新
