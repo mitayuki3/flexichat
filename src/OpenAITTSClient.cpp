@@ -210,8 +210,8 @@ QString OpenAITTSClient::generateFilePath(const QString &format) const {
             m_voice.isEmpty() ? QStringLiteral("default") : m_voice;
         relativeDir = modelDir + "/" + voiceDir + "/" + dateDir;
     }
-    QString fullDir = m_outputDir + "/" + relativeDir;
-    if (!QDir(fullDir).exists()) {
+    QDir const fullDir{m_outputDir + "/" + relativeDir};
+    if (!fullDir.exists()) {
         QDir(m_outputDir).mkpath(relativeDir);
     }
 
@@ -219,7 +219,9 @@ QString OpenAITTSClient::generateFilePath(const QString &format) const {
     QString timeStr = QTime::currentTime().toString("HHmmsszzz");
     QString fileName = QString("%1.%2").arg(timeStr, format);
 
-    return fullDir + "/" + fileName;
+    // 結合して正規化する
+    QString const retPath = QDir::cleanPath(fullDir.filePath(fileName));
+    return retPath;
 }
 
 /**
