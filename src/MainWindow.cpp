@@ -116,8 +116,7 @@ void MainWindow::connectSignals() {
     connect(ui->ttsVoiceCombo, QOverload<int>::of(&QComboBox::activated), this,
             [commitTtsVoice](int) { commitTtsVoice(); });
     if (QLineEdit *voiceLineEdit = ui->ttsVoiceCombo->lineEdit()) {
-        connect(voiceLineEdit, &QLineEdit::editingFinished, this,
-                commitTtsVoice);
+        connect(voiceLineEdit, &QLineEdit::editingFinished, this, commitTtsVoice);
     }
 
     // インストラクション欄（voicedesign モデル選択時のみ表示・編集）
@@ -501,8 +500,7 @@ void MainWindow::setupUI() {
 
     // インストラクション欄に保存値を反映し、現在のモデルに応じて
     // ボイス欄／インストラクション欄の表示を切替
-    ui->ttsInstructionsEdit->setPlainText(
-        m_profileManager->getTtsInstructions());
+    ui->ttsInstructionsEdit->setPlainText(m_profileManager->getTtsInstructions());
     updateModelDependentVisibility(savedModel);
 
     // 保存された自動再生設定をチェックボックスに反映
@@ -737,8 +735,7 @@ bool MainWindow::isVoiceDesignModel(const QString &model) {
  */
 void MainWindow::updateModelDependentVisibility(const QString &model) {
     bool voiceDesign = isVoiceDesignModel(model);
-    auto *layout = qobject_cast<QFormLayout *>(
-        ui->ttsParametersWidget->layout());
+    auto *layout = qobject_cast<QFormLayout *>(ui->ttsParametersWidget->layout());
     if (layout) {
         layout->setRowVisible(ui->ttsInstructionsEdit, voiceDesign);
         layout->setRowVisible(ui->ttsVoiceCombo, !voiceDesign);
