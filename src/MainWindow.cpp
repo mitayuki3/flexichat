@@ -191,7 +191,7 @@ void MainWindow::populateProfileCombo() {
  * 各アイテムにはプロファイル ID を Qt::UserRole として持たせる
  */
 void MainWindow::populateTrashList() {
-    auto trashed = m_profileManager->getTrashedProfiles();
+    auto const trashed = m_profileManager->getTrashedProfiles();
     ui->trashListWidget->clear();
     for (const auto &p : trashed) {
         auto *item = new QListWidgetItem(p.displayName(), ui->trashListWidget);
@@ -556,7 +556,7 @@ void MainWindow::onChatDisplayContextMenu(const QPoint &pos) {
         ui->chatDisplay->setCurrentIndex(clickedIndex);
     }
 
-    QModelIndexList selected = selectionModel->selectedIndexes();
+    QModelIndexList const selected = selectionModel->selectedIndexes();
     if (selected.isEmpty()) {
         return;
     }
@@ -622,7 +622,7 @@ void MainWindow::deleteSelectedChatItems() {
     if (!selectionModel) {
         return;
     }
-    QModelIndexList selected = selectionModel->selectedIndexes();
+    QModelIndexList const selected = selectionModel->selectedIndexes();
     if (selected.isEmpty()) {
         return;
     }
@@ -665,7 +665,7 @@ void MainWindow::playSelectedChatItems() {
 
     QStringList texts;
     texts.reserve(selected.size());
-    for (const QModelIndex &idx : selected) {
+    for (const QModelIndex &idx : std::as_const(selected)) {
         if (m_model->isAssistantRow(idx.row())) {
             texts.append(m_model->contentAt(idx.row()));
         }
