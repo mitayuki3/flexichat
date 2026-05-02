@@ -121,7 +121,7 @@ void MainWindow::connectSignals() {
 
     // 指示欄（voicedesign モデル選択時のみ表示・編集）
     // 連続入力中はタイマーでデバウンスし、フォーカスアウト時には即時保存する
-    connect(ui->ttsInstructionsEdit, &QPlainTextEdit::textChanged, this,
+    connect(ui->ttsInstructionsEdit, &QLineEdit::textChanged, this,
             &MainWindow::scheduleInstructionsCommit);
 
     // TTS リスト
@@ -335,7 +335,7 @@ void MainWindow::scheduleInstructionsCommit() {
  */
 void MainWindow::commitInstructionsEdits() {
     m_instructionsCommitTimer->stop();
-    emit instructionsChanged(ui->ttsInstructionsEdit->toPlainText());
+    emit instructionsChanged(ui->ttsInstructionsEdit->text());
 }
 
 /**
@@ -500,7 +500,7 @@ void MainWindow::setupUI() {
 
     // 指示欄に保存値を反映し、現在のモデルに応じて
     // ボイス欄／指示欄の表示を切替
-    ui->ttsInstructionsEdit->setPlainText(m_profileManager->getTtsInstructions());
+    ui->ttsInstructionsEdit->setText(m_profileManager->getTtsInstructions());
     updateModelDependentVisibility(savedModel);
 
     // 保存された自動再生設定をチェックボックスに反映
