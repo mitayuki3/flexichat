@@ -24,7 +24,8 @@ MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
     m_profileManager(profileManager), m_model(new ChatListModel(this)),
     m_lastAssistantMessage(""), m_pendingTtsText(""),
-    m_profileCommitTimer(new QTimer(this)) {
+    m_profileCommitTimer(new QTimer(this)),
+    m_instructionsCommitTimer(new QTimer(this)) {
     ui->setupUi(this);
 
     // プロファイル編集の保存をデバウンスするタイマー
@@ -32,6 +33,12 @@ MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     m_profileCommitTimer->setInterval(600);
     connect(m_profileCommitTimer, &QTimer::timeout, this,
             &MainWindow::commitProfileEdits);
+
+    // インストラクション編集の保存をデバウンスするタイマー
+    m_instructionsCommitTimer->setSingleShot(true);
+    m_instructionsCommitTimer->setInterval(600);
+    connect(m_instructionsCommitTimer, &QTimer::timeout, this,
+            &MainWindow::commitInstructionsEdits);
 
     // モデルのセットアップ
     ui->chatDisplay->setModel(m_model);
@@ -52,6 +59,10 @@ MainWindow::~MainWindow() {
     if (m_profileCommitTimer->isActive()) {
         m_profileCommitTimer->stop();
         commitProfileEdits();
+    }
+    if (m_instructionsCommitTimer->isActive()) {
+        m_instructionsCommitTimer->stop();
+        commitInstructionsEdits();
     }
     delete ui;
 }
@@ -110,11 +121,9 @@ void MainWindow::connectSignals() {
     }
 
     // インストラクション欄（voicedesign モデル選択時のみ表示・編集）
+    // 連続入力中はタイマーでデバウンスし、フォーカスアウト時には即時保存する
     connect(ui->ttsInstructionsEdit, &QPlainTextEdit::textChanged, this,
-            [this]() {
-                emit instructionsChanged(
-                    ui->ttsInstructionsEdit->toPlainText());
-            });
+            &MainWindow::scheduleInstructionsCommit);
 
     // TTS リスト
     connect(ui->ttsListWidget, &QListWidget::currentRowChanged, this,
@@ -312,6 +321,22 @@ void MainWindow::commitProfileEdits() {
     m_committingFromEditor = true;
     m_profileManager->updateProfile(updated);
     m_committingFromEditor = false;
+}
+
+/**
+ * @brief インストラクション編集の保存をデバウンスする
+ */
+void MainWindow::scheduleInstructionsCommit() {
+    m_instructionsCommitTimer->start();
+}
+
+/**
+ * @brief インストラクション欄の内容を保存する
+ * 同一値であれば AppSettings 側で書き込みがスキップされる
+ */
+void MainWindow::commitInstructionsEdits() {
+    m_instructionsCommitTimer->stop();
+    emit instructionsChanged(ui->ttsInstructionsEdit->toPlainText());
 }
 
 /**

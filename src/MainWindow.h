@@ -64,6 +64,8 @@ private slots:
     void onTtsListActivated(const QModelIndex &index);
     void scheduleProfileCommit();
     void commitProfileEdits();
+    void scheduleInstructionsCommit();
+    void commitInstructionsEdits();
     void onAddProfileClicked();
     void onTrashProfileClicked();
     void onEmptyTrashClicked();
@@ -77,6 +79,7 @@ private:
     QString m_pendingTtsText;
     QString m_displayedProfileId;
     QTimer *m_profileCommitTimer;
+    QTimer *m_instructionsCommitTimer;
     bool m_loadingProfileFields = false;
     bool m_committingFromEditor = false;
 
