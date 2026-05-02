@@ -34,7 +34,7 @@ MainWindow::MainWindow(ProfileManager *profileManager, QWidget *parent)
     connect(m_profileCommitTimer, &QTimer::timeout, this,
             &MainWindow::commitProfileEdits);
 
-    // インストラクション編集の保存をデバウンスするタイマー
+    // 指示編集の保存をデバウンスするタイマー
     m_instructionsCommitTimer->setSingleShot(true);
     m_instructionsCommitTimer->setInterval(600);
     connect(m_instructionsCommitTimer, &QTimer::timeout, this,
@@ -119,7 +119,7 @@ void MainWindow::connectSignals() {
         connect(voiceLineEdit, &QLineEdit::editingFinished, this, commitTtsVoice);
     }
 
-    // インストラクション欄（voicedesign モデル選択時のみ表示・編集）
+    // 指示欄（voicedesign モデル選択時のみ表示・編集）
     // 連続入力中はタイマーでデバウンスし、フォーカスアウト時には即時保存する
     connect(ui->ttsInstructionsEdit, &QPlainTextEdit::textChanged, this,
             &MainWindow::scheduleInstructionsCommit);
@@ -323,14 +323,14 @@ void MainWindow::commitProfileEdits() {
 }
 
 /**
- * @brief インストラクション編集の保存をデバウンスする
+ * @brief 指示編集の保存をデバウンスする
  */
 void MainWindow::scheduleInstructionsCommit() {
     m_instructionsCommitTimer->start();
 }
 
 /**
- * @brief インストラクション欄の内容を保存する
+ * @brief 指示欄の内容を保存する
  * 同一値であれば AppSettings 側で書き込みがスキップされる
  */
 void MainWindow::commitInstructionsEdits() {
@@ -498,8 +498,8 @@ void MainWindow::setupUI() {
     ui->ttsVoiceCombo->addItems(voiceHistory);
     ui->ttsVoiceCombo->setCurrentText(m_profileManager->getTtsVoice());
 
-    // インストラクション欄に保存値を反映し、現在のモデルに応じて
-    // ボイス欄／インストラクション欄の表示を切替
+    // 指示欄に保存値を反映し、現在のモデルに応じて
+    // ボイス欄／指示欄の表示を切替
     ui->ttsInstructionsEdit->setPlainText(m_profileManager->getTtsInstructions());
     updateModelDependentVisibility(savedModel);
 
@@ -711,7 +711,7 @@ QString MainWindow::getPendingTtsText() const { return m_pendingTtsText; }
 
 /**
  * @brief TTS モデル選択変更時の処理
- * 保存用の modelChanged シグナルを発行し、モデルに応じてインストラクション欄
+ * 保存用の modelChanged シグナルを発行し、モデルに応じて指示欄
  * の表示を切り替える。
  */
 void MainWindow::onTtsModelChanged(const QString &model) {
@@ -722,7 +722,7 @@ void MainWindow::onTtsModelChanged(const QString &model) {
 /**
  * @brief モデル名が voicedesign モデルかどうか
  * irodori-tts-500m-v2-voicedesign など "voicedesign" を含むモデルでのみ
- * インストラクションを指定できる
+ * 指示を指定できる
  */
 bool MainWindow::isVoiceDesignModel(const QString &model) {
     return model.contains("voicedesign", Qt::CaseInsensitive);
@@ -730,7 +730,7 @@ bool MainWindow::isVoiceDesignModel(const QString &model) {
 
 /**
  * @brief モデル選択に応じて voicedesign 専用 UI と通常 UI を切り替える
- * voicedesign モデル選択時はインストラクション欄を表示し、ボイス欄を隠す。
+ * voicedesign モデル選択時は指示欄を表示し、ボイス欄を隠す。
  * 通常モデル選択時はその逆。
  */
 void MainWindow::updateModelDependentVisibility(const QString &model) {

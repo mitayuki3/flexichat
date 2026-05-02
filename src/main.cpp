@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(&mainWindow, &MainWindow::voiceChanged, settings,
                      &AppSettings::saveTtsVoice);
 
-    // TTS タブのインストラクション変更を保存（保存経由で MainLogic に反映される）
+    // TTS タブの指示変更を保存（保存経由で MainLogic に反映される）
     QObject::connect(&mainWindow, &MainWindow::instructionsChanged, settings,
                      &AppSettings::saveTtsInstructions);
 

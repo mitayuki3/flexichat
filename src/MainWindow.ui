@@ -366,7 +366,7 @@
              <item row="3" column="0">
               <widget class="QLabel" name="ttsInstructionsLabel">
                <property name="text">
-                <string>インストラクション</string>
+                <string>指示</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
@@ -382,7 +382,7 @@
                 </sizepolicy>
                </property>
                <property name="placeholderText">
-                <string>音声デザイン用のインストラクションを入力...</string>
+                <string>音声デザイン用の指示を入力...</string>
                </property>
               </widget>
              </item>
