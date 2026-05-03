@@ -56,6 +56,7 @@ private slots:
     void onProfileComboActivated(int index);
     void onChatDisplayContextMenu(const QPoint &pos);
     void editSelectedChatItem();
+    void copySelectedChatItems();
     void deleteSelectedChatItems();
     void playSelectedChatItems();
     void generateTtsSpeech();

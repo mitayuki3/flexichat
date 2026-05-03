@@ -2,6 +2,7 @@
 #include "ChatListModel.h"
 #include "ProfileManager.h"
 #include "ui_MainWindow.h"
+#include <QClipboard>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
@@ -576,6 +577,9 @@ void MainWindow::onChatDisplayContextMenu(const QPoint &pos) {
         connect(editAction, &QAction::triggered, this,
                 &MainWindow::editSelectedChatItem);
     }
+    QAction *copyAction = menu.addAction("コピー");
+    connect(copyAction, &QAction::triggered, this,
+            &MainWindow::copySelectedChatItems);
     QAction *deleteAction = menu.addAction("削除");
     connect(deleteAction, &QAction::triggered, this,
             &MainWindow::deleteSelectedChatItems);
@@ -611,6 +615,37 @@ void MainWindow::editSelectedChatItem() {
         return;
     }
     m_model->setData(idx, newText, ChatListModel::ContentRole);
+}
+
+/**
+ * @brief 選択中のチャットアイテムをコピーする
+ * 単一・複数選択どちらでも動作する
+ */
+void MainWindow::copySelectedChatItems() {
+    QItemSelectionModel const *selectionModel = ui->chatDisplay->selectionModel();
+    if (!selectionModel) {
+        return;
+    }
+    QModelIndexList selected = selectionModel->selectedIndexes();
+    if (selected.isEmpty()) {
+        return;
+    }
+
+    // 行順を保つために選択インデックスを行番号で昇順ソート
+    std::sort(selected.begin(), selected.end(),
+              [](const QModelIndex &a, const QModelIndex &b) {
+        return a.row() < b.row();
+    });
+
+    QStringList texts;
+    texts.reserve(selected.size());
+    for (const QModelIndex &idx : std::as_const(selected)) {
+        texts.append(m_model->data(idx, ChatListModel::ContentRole).toString());
+    }
+
+    // 複数選択時は改行で結合
+    QString textToCopy = texts.join("\n");
+    QApplication::clipboard()->setText(textToCopy);
 }
 
 /**
