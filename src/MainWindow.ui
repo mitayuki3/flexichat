@@ -198,6 +198,9 @@
                <verstretch>1</verstretch>
               </sizepolicy>
              </property>
+             <property name="tabChangesFocus">
+              <bool>true</bool>
+             </property>
              <property name="placeholderText">
               <string>システムプロンプトを入力...</string>
              </property>
@@ -271,6 +274,9 @@
               <horstretch>0</horstretch>
               <verstretch>2</verstretch>
              </sizepolicy>
+            </property>
+            <property name="tabChangesFocus">
+             <bool>true</bool>
             </property>
             <property name="plainText">
              <string>これは AI 合成音声です</string>
